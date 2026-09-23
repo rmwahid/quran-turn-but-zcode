@@ -1,0 +1,6 @@
+# Browsers re-check styles and scripts on each visit (cheap: Pages answers
+# with 304 via ETag), so a deploy is never hidden behind a stale cache.
+/*.css
+  Cache-Control: public, max-age=0, must-revalidate
+/*.js
+  Cache-Control: public, max-age=0, must-revalidate

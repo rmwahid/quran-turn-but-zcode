@@ -6,7 +6,7 @@
 <meta name="color-scheme" content="light dark">
 <title>Quran Turn · Read Qur'an while your agent thinks</title>
 <meta name="description" content="A quiet, offline Qur'an reader that opens while Claude Code or Codex works on your prompt. Exact Tanzil text, no account, no tracking.">
-<link rel="stylesheet" href="site.css">
+<link rel="stylesheet" href="site.css?v=0.5.0b">
 </head>
 <body>
 <header class="top">
@@ -105,17 +105,10 @@
     </section>
   </div>
 
-  <section class="updates" aria-labelledby="update-title">
+  <section class="updates" id="update" aria-labelledby="update-title">
     <div class="wrap">
+      <h2 id="update-title">Update</h2>
       <p class="version-status" id="version-status" hidden role="status"></p>
-      <details class="fold" id="update">
-        <summary>
-          <h2 id="update-title">Update</h2>
-          <span class="fold-hint">Auto-update, or one prompt to your agent. Your place is never touched.</span>
-          <span class="fold-ver" id="update-ver" hidden></span>
-          <svg class="fold-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
-        </summary>
-      <div class="fold-body">
       <div class="update-grid">
         <article class="update-card">
           <span class="step-k"><i style="background: var(--teal);"></i>SET IT ONCE · CLAUDE CODE</span>
@@ -136,18 +129,21 @@
         </article>
       </div>
       <p class="update-after"><strong>That’s all.</strong> On your next prompt, the reader swaps itself to the new version and an open reader window reloads on its own. Your place and reading log are never touched. Coming from v0.4.0 or earlier? Refresh the reader window once.</p>
-      </div>
-      </details>
     </div>
   </section>
 
-  <section class="changelog" id="changelog" aria-labelledby="changelog-title">
+  <section class="changelog" aria-labelledby="changelog-title">
     <div class="wrap">
-      <h2 id="changelog-title">Changelog</h2>
-      <ol class="timeline" id="timeline" aria-live="polite"><li class="tl-fallback">Loading…</li></ol>
-      <details class="fold fold-older" id="older" hidden>
-        <summary><span class="fold-hint" id="older-label">Earlier releases</span><svg class="fold-chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
-        <ol class="timeline" id="timeline-older"></ol>
+      <details class="fold" id="changelog">
+        <summary>
+          <h2 id="changelog-title">Changelog</h2>
+          <span class="fold-hint" id="changelog-hint">Every release, newest first.</span>
+          <span class="fold-ver" id="changelog-ver" hidden></span>
+          <svg class="fold-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+        </summary>
+        <div class="fold-body">
+          <ol class="timeline" id="timeline" aria-live="polite"><li class="tl-fallback">Loading…</li></ol>
+        </div>
       </details>
     </div>
   </section>
@@ -179,8 +175,8 @@
     </div>
   </div>
 </div>
-<script type="module" src="donate.js"></script>
-<script type="module" src="copy.js"></script>
-<script type="module" src="updates.js"></script>
+<script type="module" src="donate.js?v=0.5.0b"></script>
+<script type="module" src="copy.js?v=0.5.0b"></script>
+<script type="module" src="updates.js?v=0.5.0b"></script>
 </body>
 </html>

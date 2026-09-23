@@ -6,7 +6,7 @@
 <meta name="color-scheme" content="light dark">
 <title>Ngaji Companion for Muse</title>
 <meta name="description" content="A prompt for a Muse scheduled task that sends you 5 Qur'an verses at every prayer time. No account, no API keys, no installs.">
-<link rel="stylesheet" href="site.css">
+<link rel="stylesheet" href="site.css?v=0.5.0b">
 </head>
 <body>
 <header class="top">
@@ -18,20 +18,23 @@
 
 <main class="agent-main">
   <div class="wrap agent-wrap">
-    <span class="eyebrow"><img class="logo-muse" src="muse.svg" width="14" height="14" alt="">FOR MUSE · SCHEDULED TASK</span>
+    <span class="muse-badge"><img class="logo-muse" src="muse.svg" width="22" height="22" alt="Muse logo">Available on Muse</span>
     <h1 class="agent-title">Ngaji Companion for Muse</h1>
     <p class="agent-lede">A prompt you paste into a Muse scheduled task. At every prayer time it sends you 5 verses of the Qur'an, 25 a day, with buttons to mark them read, skip, or keep going. It remembers where you stopped. No accounts, no API keys, no installs.</p>
 
-    <ol class="agent-steps">
-      <li>Create a scheduled task in Muse that runs every 15 minutes.</li>
-      <li>Paste the prompt below.</li>
-      <li>Answer the onboarding question: where to start reading.</li>
-      <li>Done.</li>
+    <ol class="agent-steps" aria-label="Install steps">
+      <li><span class="agent-step-n">1</span><span>Create a scheduled task in Muse that runs every 15 minutes.</span></li>
+      <li><span class="agent-step-n">2</span><span>Paste the prompt below.</span></li>
+      <li><span class="agent-step-n">3</span><span>Answer the onboarding question: where to start reading.</span></li>
+      <li><span class="agent-step-n">4</span><span>Done. Verses arrive at the next prayer time.</span></li>
     </ol>
 
     <section class="agent-prompt" aria-labelledby="prompt-title">
       <div class="agent-prompt-head">
-        <h2 id="prompt-title">The prompt</h2>
+        <div>
+          <h2 id="prompt-title">The prompt</h2>
+          <p class="agent-prompt-sub">Paste it as-is. You can change the numbers under CONFIG.</p>
+        </div>
         <div class="agent-actions">
           <button type="button" class="btn-copy-prompt agent-btn" id="copy-prompt">Copy</button>
           <button type="button" class="btn-copy-prompt btn-copy-secondary agent-btn" id="share-prompt" hidden>Share to Muse</button>
@@ -111,6 +114,6 @@ from Al-Fatihah 1:1 the next day.</pre>
     <a href="https://github.com/rzrizaldy/quran-turn">GitHub</a>
   </div>
 </footer>
-<script type="module" src="agent.js"></script>
+<script type="module" src="agent.js?v=0.5.0b"></script>
 </body>
 </html>

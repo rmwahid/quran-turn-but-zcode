@@ -44,14 +44,13 @@ const release = (r, i) => el('li', { className: 'tl-item' + (i === 0 ? ' latest'
     el('ul', { className: 'tl-list' }, ...r.items.map((t) => el('li', {}, ...inline(t)))),
   );
 
-// The latest release stays in view; older ones fold under "Earlier releases".
+// The Changelog is folded; its header shows the latest version and summary.
 function renderTimeline(releases) {
-  $('timeline').replaceChildren(release(releases[0], 0));
-  const older = releases.slice(1);
-  if (!older.length) return;
-  $('timeline-older').replaceChildren(...older.map((r, i) => release(r, i + 1)));
-  $('older-label').textContent = `Earlier releases (${older.length})`;
-  $('older').hidden = false;
+  $('timeline').replaceChildren(...releases.map(release));
+  const [latest] = releases;
+  $('changelog-ver').textContent = `Latest v${latest.version}`;
+  $('changelog-ver').hidden = false;
+  if (latest.summary) $('changelog-hint').textContent = latest.summary.replace(/\*\*|`/g, '');
 }
 
 function renderStatus(releases) {
@@ -64,7 +63,6 @@ function renderStatus(releases) {
     const behind = releases.filter((r) => cmp(r.version, mine) > 0);
     if (behind.length) {
       box.dataset.state = 'behind';
-      $('update').open = true;
       box.replaceChildren(
         el('strong', { textContent: `You're on v${mine} · v${latest} is out` }),
         el('span', { textContent: ` · ${behind.length} update${behind.length === 1 ? '' : 's'} since yours. Pick any route below; the reader swaps itself over on your next prompt.` }));
@@ -73,11 +71,8 @@ function renderStatus(releases) {
       box.replaceChildren(el('strong', { textContent: `You're up to date · v${mine}` }), el('span', { textContent: ' · nothing to do.' }));
     }
   } else {
-    // No version to compare: a quiet "Latest" pill on the folded Update header.
-    box.hidden = true;
-    const pill = $('update-ver');
-    pill.textContent = `Latest v${latest}`;
-    pill.hidden = false;
+    box.dataset.state = 'info';
+    box.replaceChildren(el('strong', { textContent: `Latest version: v${latest}` }));
   }
 }
 
@@ -96,10 +91,9 @@ async function init() {
   }
 }
 
-// The Update section is folded; the nav link, the reader's "#update" link and
-// a direct visit open it.
+// The nav's "Changelog" link opens the folded timeline.
 function openFromHash() {
-  if (location.hash === '#update') $('update').open = true;
+  if (location.hash === '#changelog') $('changelog').open = true;
 }
 addEventListener('hashchange', openFromHash);
 openFromHash();

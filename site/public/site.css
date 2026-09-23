@@ -265,23 +265,41 @@ button.btn { border: none; font-family: inherit; cursor: pointer; }
 /* ── Muse: hero chip + /agent page ─────────────────────────────────────────── */
 .logo-muse { flex-shrink: 0; width: 20px; height: 20px; }
 .works-more { margin-top: 10px; }
-.agent-main .agent-wrap { max-width: 820px; padding-top: 56px; padding-bottom: 64px; }
-.agent-main .eyebrow { display: inline-flex; align-items: center; gap: 8px; }
-.agent-main .eyebrow .logo-muse { width: 14px; height: 14px; }
-.agent-title { font-size: clamp(34px, 6vw, 52px); }
-.agent-lede { margin: 18px 0 0; max-width: 620px; font-size: 17px; line-height: 1.6; color: var(--body); }
-.agent-steps { margin: 24px 0 0; padding-left: 22px; display: grid; gap: 6px; font-size: 15px; line-height: 1.55; color: var(--body); }
-.agent-prompt { margin-top: 32px; }
-.agent-prompt-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
-.agent-prompt h2 { margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.01em; }
+.agent-main .agent-wrap { max-width: 860px; padding-top: 48px; padding-bottom: 64px; }
+.muse-badge {
+  display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px 0 10px;
+  border: 1px solid var(--line); border-radius: 999px; background: var(--card);
+  font-size: 13px; font-weight: 700; color: var(--ink);
+}
+.muse-badge .logo-muse { width: 22px; height: 22px; }
+.agent-title { margin-top: 18px; font-size: clamp(34px, 6vw, 52px); }
+.agent-lede { margin: 16px 0 0; max-width: 640px; font-size: 17px; line-height: 1.6; color: var(--body); }
+.agent-steps { margin: 28px 0 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+@media (min-width: 720px) { .agent-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.agent-steps li {
+  display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px;
+  border: 1px solid var(--line); border-radius: 14px; background: var(--card);
+  font-size: 15px; line-height: 1.5; color: var(--body);
+}
+.agent-step-n {
+  flex-shrink: 0; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 999px;
+  background: var(--soft); color: var(--ink); font: 500 12px var(--mono);
+}
+.agent-prompt { margin-top: 28px; border: 1px solid var(--line); border-radius: 18px; background: var(--card); overflow: hidden; }
+.agent-prompt-head {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 16px;
+  padding: 16px 18px; border-bottom: 1px solid var(--soft);
+}
+.agent-prompt h2 { margin: 0; font-size: 18px; font-weight: 800; letter-spacing: -0.01em; }
+.agent-prompt-sub { margin: 4px 0 0; font-size: 13px; color: var(--muted); }
 .agent-actions { display: flex; gap: 8px; }
 .agent-btn { height: 40px; padding: 0 18px; }
 .agent-code {
-  margin: 0; max-height: 60vh; overflow: auto; padding: 18px 20px; border-radius: 14px;
+  margin: 0; max-height: 60vh; overflow: auto; padding: 18px 20px;
   background: var(--code-bg); color: var(--code); font-family: var(--mono); font-size: 12.5px; line-height: 1.7;
-  white-space: pre-wrap; overflow-wrap: anywhere;
+  white-space: pre; tab-size: 2;
 }
-.agent-code:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+.agent-code:focus-visible { outline: 2px solid var(--teal); outline-offset: -2px; }
 
 /* ── Folded sections (Update, earlier releases) ───────────────────────────── */
 .fold > summary { list-style: none; cursor: pointer; }
@@ -289,23 +307,19 @@ button.btn { border: none; font-family: inherit; cursor: pointer; }
 .fold-chev { flex-shrink: 0; color: var(--muted); transition: transform 0.2s ease; }
 .fold[open] .fold-chev { transform: rotate(180deg); }
 .fold-hint { font-size: 14px; color: var(--muted); }
-#update > summary {
+#changelog > summary {
   display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 6px 16px;
   padding: 18px 20px; border: 1px solid var(--line); border-radius: 18px; background: var(--card);
   transition: border-color 0.2s ease;
 }
-#update > summary:hover { border-color: var(--teal); }
-#update > summary:focus-visible, .fold-older > summary:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
-.updates #update h2 { margin: 0; }
+#changelog > summary:hover { border-color: var(--teal); }
+#changelog > summary:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+.changelog #changelog h2 { margin: 0; }
 .fold-ver { font-family: var(--mono); font-size: 11px; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
 @media (max-width: 640px) {
-  #update > summary { grid-template-columns: auto minmax(0, 1fr) auto; }
-  #update > summary .fold-hint { grid-column: 1 / span 2; grid-row: 2; }
-  #update > summary .fold-ver { justify-self: start; }
-  #update > summary .fold-chev { grid-column: 3; grid-row: 1 / span 2; }
+  #changelog > summary { grid-template-columns: auto minmax(0, 1fr) auto; }
+  #changelog > summary .fold-hint { grid-column: 1 / span 2; grid-row: 2; }
+  #changelog > summary .fold-ver { justify-self: start; }
+  #changelog > summary .fold-chev { grid-column: 3; grid-row: 1 / span 2; }
 }
 .fold-body { padding-top: 16px; }
-.fold-older { margin-top: 22px; }
-.fold-older > summary { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
-.fold-older > summary:hover .fold-hint { color: var(--ink); }
-.fold-older .timeline { margin-top: 18px; }
