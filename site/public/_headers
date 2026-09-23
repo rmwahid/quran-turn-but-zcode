@@ -1,6 +1,12 @@
 # Browsers re-check styles and scripts on each visit (cheap: Pages answers
 # with 304 via ETag), so a deploy is never hidden behind a stale cache.
-/*.css
+/site.css
   Cache-Control: public, max-age=0, must-revalidate
-/*.js
+/agent.js
+  Cache-Control: public, max-age=0, must-revalidate
+/copy.js
+  Cache-Control: public, max-age=0, must-revalidate
+/donate.js
+  Cache-Control: public, max-age=0, must-revalidate
+/updates.js
   Cache-Control: public, max-age=0, must-revalidate
