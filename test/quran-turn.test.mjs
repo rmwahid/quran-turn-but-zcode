@@ -307,6 +307,41 @@ describe('server', () => {
     }
   });
 
+  test('float mode: the card stays put, nothing moves on its own, Back only focuses the agent', async () => {
+    const win = fakeWin();
+    const { srv, base, post } = await boot(win);
+    const ctrl = new AbortController();
+    const sse = await fetch(base + '/api/events', { signal: ctrl.signal });
+    const settle = () => new Promise((r) => setTimeout(r, 50));
+    try {
+      const host = 'com.openai.codex';
+      await post('/api/hook', { event: 'start', agent: 'codex', host, session_id: 'f' });
+      await settle();
+      win.calls.length = 0;
+
+      await post('/api/float', { on: true });
+      await settle();
+      assert.deepEqual(win.calls, [['collapse', false]], 'main window tucks away, agent is not focused');
+      win.calls.length = 0;
+
+      for (const event of ['needs-you', 'resume', 'stop']) await post('/api/hook', { event, session_id: 'f' });
+      await settle();
+      assert.deepEqual(win.calls, [], 'hooks never move windows while floating');
+
+      await post('/api/back-to-agent', {});
+      assert.deepEqual(win.calls, [['focus', host]], 'confirming only brings the agent forward');
+      win.calls.length = 0;
+
+      await post('/api/float', { on: false });
+      await settle();
+      assert.deepEqual(win.calls, [['expand', true]], 'closing the card brings the full reader back');
+    } finally {
+      ctrl.abort();
+      sse.body?.cancel().catch(() => {});
+      srv.close();
+    }
+  });
+
   test('only real bundle ids are ever passed to `open -b`', async () => {
     const { validBundleId } = await import('../src/window.mjs');
     assert.ok(validBundleId('com.anthropic.claudefordesktop'));

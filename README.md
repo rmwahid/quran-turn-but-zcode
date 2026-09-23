@@ -2,7 +2,7 @@
 
 **Read the Qur'an while your coding agent thinks.**
 
-Quran Turn is a plugin for **Claude Code** and **Codex**. When you send your agent a prompt, a quiet reader window opens at the exact ayah you left off. When the agent needs you, the reader shrinks to a small strip and brings your agent back to the front (one press of Space). When the turn ends, your place is saved automatically.
+Quran Turn is a plugin for **Claude Code** and **Codex**. When you send your agent a prompt, a quiet reader window opens at the exact ayah you left off. Press **Float** and the reader becomes a small ayah card that stays on top of every window, right beside your agent. When the agent needs you, a strip slides into the card and you go back with one press of Space. When the turn ends, your place is saved automatically.
 
 <p align="center">
   <img src="docs/reader-working.png" width="260" alt="Reader while Claude is working, showing Al-Baqara 2:155">
@@ -88,6 +88,17 @@ Then send any prompt. The reader opens as a small app window if Chrome, Edge, Br
 - **Reader server:** a tiny local server on `127.0.0.1:47114` serves the reader. The first hook starts it, and it exits after 30 minutes with no reader connected.
 - **One hooks file for both agents:** Codex provides `CLAUDE_PLUGIN_ROOT` as an alias and also sets `PLUGIN_ROOT`, which is how Quran Turn tells the two apart.
 
+## Float mode
+
+Press **Float** in the reader (or the **F** key) and the reader becomes a small ayah card that stays **on top of every app**, including the Claude desktop app, Codex, Terminal and your editor. Drag it wherever you like, and it stays there.
+
+- **While the agent works:** read with ← / →. The card never moves on its own and never steals focus.
+- **When the agent needs you:** a strip slides into the card: *Claude needs you · Back to Claude*. Nothing jumps and your reading isn't cut off. Press **Space** (or Enter) when you're ready, and your agent comes to the front.
+- **When the turn ends:** *Saved at 2:157 · 4 ayat* slides in. Press Space to go back, or keep reading with ←.
+- **Esc** or **×** closes the card and brings the full reader back.
+
+Float uses Chrome's Document Picture-in-Picture, so it needs **Chrome, Edge or Brave**, on macOS, Windows or Linux. Opening it takes one click or key press per session, because browsers require that for floating windows. Without Float, the reader works as a regular window, which shrinks to a strip when the agent needs you (macOS).
+
 ## Updating
 
 A new version is released automatically whenever the version number changes on `main` (see `.github/workflows/release.yml`). To get it:
@@ -124,6 +135,8 @@ Restart the agent afterwards. Your reading position and log live in `~/.quran-tu
 | `g` | Go to a surah, or type `2:255` |
 | `+` / `-` | Text size |
 | `d` | Toggle light / dark |
+| `f` | **Float**: the always-on-top ayah card |
+| `esc` | Close the float card |
 
 ```
 quran-turn open        open the reader window

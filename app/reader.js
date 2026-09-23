@@ -2,6 +2,7 @@
 // and are never altered; the file is checked against its pinned SHA-256 first.
 import { QURAN_SHA256, SITE_URL, SUPPORT_URL, VERSION } from './config.js';
 import { arabicDigits, parseTanzil, sha256Hex, splitBasmala } from './quran-core.js';
+import { FloatCard, canFloat } from './float.js';
 
 const $ = (id) => document.getElementById(id);
 const meta = window.QuranData;
@@ -15,6 +16,7 @@ let canSwitch = false;
 let saving = Promise.resolve();
 let pendingSaves = 0;
 let doneTimer = null;
+let floating = false;
 
 const store = {
   get(k) { try { return localStorage.getItem(k); } catch { return null; } },
@@ -33,25 +35,36 @@ async function loadText() {
   return parseTanzil(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
 }
 
-function renderAyah() {
-  const { surah, ayah } = pos;
+// Writes one ayah into `el` (main reader or float card) through textContent only,
+// then checks the element reads back exactly the source string.
+function fillAyah(el, surah, ayah) {
   const text = quran.bySurah[surah][ayah - 1];
-  const el = $('ayah-text');
   const split = splitBasmala(surah, ayah, text, quran.verses.get('1:1'));
+  const doc = el.ownerDocument;
   if (split) {
-    const b = document.createElement('span');
+    const b = doc.createElement('span');
     b.className = 'basmala';
     b.textContent = split.basmala;
-    el.replaceChildren(b, document.createTextNode(' ' + split.rest));
+    el.replaceChildren(b, doc.createTextNode(' ' + split.rest));
   } else {
     el.textContent = text;
   }
-  if (el.textContent !== text) return fail(new Error(`Rendering check failed at ${surah}:${ayah}.`));
-  $('ayah-end').textContent = '۝' + arabicDigits(ayah);
+  if (el.textContent !== text) throw new Error(`Rendering check failed at ${surah}:${ayah}.`);
+}
+
+function renderAyah() {
+  const { surah, ayah } = pos;
+  try {
+    fillAyah($('ayah-text'), surah, ayah);
+  } catch (err) {
+    return fail(err);
+  }
+  $('ayah-end').textContent = '\u06DD' + arabicDigits(ayah);
   $('surah-ar').textContent = meta.Sura[surah][4];
   $('surah-ref').textContent = `${meta.Sura[surah][5].toUpperCase()} · ${surah}:${ayah}`;
   document.title = `${surah}:${ayah} · Quran Turn`;
   $('stage').scrollTop = 0;
+  renderFloat();
 }
 
 function fail(err) {
@@ -98,8 +111,8 @@ function renderStatus() {
   } else {
     banner.hidden = true;
     banner.dataset.kind = 'idle';
-    $('banner-title').textContent = `Saved at ${pos.surah}:${pos.ayah}`;
-    $('banner-meta').textContent = 'reading continues on your next prompt';
+    $('banner-title').textContent = floating ? 'Reading in the floating card' : `Saved at ${pos.surah}:${pos.ayah}`;
+    $('banner-meta').textContent = floating ? 'close the card to come back here' : 'reading continues on your next prompt';
   }
   if (status === 'working') delete banner.dataset.dismissed;
 
@@ -110,6 +123,66 @@ function renderStatus() {
     : status === 'needs_you' ? `${ayat} · paused`
     : agent.last_turn ? `Last turn: ${agent.last_turn.from} → ${agent.last_turn.to}`
     : 'Go to · g';
+  renderFloat();
+}
+
+// ── Float mode ──────────────────────────────────────────────────────────────
+
+const card = new FloatCard({
+  onKey: (ev) => floatKey(ev),
+  onBack: () => backToAgent(),
+  onClose: () => setFloating(false),
+});
+
+function renderFloat() {
+  if (!card.open || !quran) return;
+  const name = AGENT_NAMES[agent.agent] || 'Agent';
+  const status = agent.status || 'idle';
+  const n = agent.ayat || 0;
+  const t = agent.last_turn;
+  try {
+    card.render({
+      fill: (el) => fillAyah(el, pos.surah, pos.ayah),
+      surah: pos.surah,
+      ayah: pos.ayah,
+      end: '\u06DD' + arabicDigits(pos.ayah),
+      ref: `${meta.Sura[pos.surah][5].toUpperCase()} · ${pos.surah}:${pos.ayah}`,
+      status,
+      statusText: status === 'working' ? `${name} is working` : status === 'needs_you' ? 'Paused' : 'Idle',
+      name,
+      canSwitch,
+      counter: status === 'working' || status === 'needs_you' ? `${n} ${n === 1 ? 'ayah' : 'ayat'} this turn` : `${pos.surah}:${pos.ayah}`,
+      doneId: t?.ended_at || null,
+      doneTitle: t ? `Saved at ${t.to} · ${t.ayat} ${t.ayat === 1 ? 'ayah' : 'ayat'}` : '',
+    });
+  } catch (err) {
+    card.close();
+    fail(err);
+  }
+}
+
+function floatKey(ev) {
+  const k = ev.key;
+  if (k === 'ArrowLeft' || k === 'j' || k === ' ') { ev.preventDefault(); step(1); }
+  else if (k === 'ArrowRight' || k === 'k') { ev.preventDefault(); step(-1); }
+}
+
+function setFloating(on) {
+  floating = on;
+  store.set('quran-turn:float', on ? '1' : '0');
+  fetch('/api/float', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ on }) }).catch(() => {});
+  renderStatus();
+}
+
+async function startFloat() {
+  if (!quran || !canFloat()) return;
+  try {
+    await card.show();
+  } catch (err) {
+    console.warn('quran-turn: could not open the float card:', err?.name, err?.message);
+    return; // no user gesture, or the browser refused
+  }
+  setFloating(true);
 }
 
 // ── Position ────────────────────────────────────────────────────────────────
@@ -259,6 +332,7 @@ function onKey(e) {
   else if (k === '+' || k === '=') setSize(currentSize() + 2);
   else if (k === '-') setSize(currentSize() - 2);
   else if (k === 'd') toggleTheme();
+  else if (k === 'f') { e.preventDefault(); startFloat(); }
 }
 
 function applySnapshot(snap) {
@@ -289,6 +363,12 @@ async function init() {
     fetch('/api/expand', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' }).catch(() => {});
   });
   $('back-btn').addEventListener('click', backToAgent);
+  if (canFloat()) {
+    $('float-btn').hidden = false;
+    $('float-btn').addEventListener('click', startFloat);
+    // Floated last time: a gentle nudge, since opening a float needs a click or key.
+    if (store.get('quran-turn:float') === '1') $('float-btn').classList.add('nudge');
+  }
   $('close-jump').addEventListener('click', closeJump);
   $('jump-search').addEventListener('input', filterSurahs);
   $('jump-form').addEventListener('submit', submitJump);

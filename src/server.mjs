@@ -61,6 +61,9 @@ export function startServer({ port = DEFAULT_PORT, win = desktop, idleExit = tru
   // when the agent needs you (or is done) it collapses to a small strip and the
   // agent's app comes to the front. Its previous size is restored afterwards.
   let savedBounds = null;
+  // Float mode: the reader lives in an always-on-top card, so the main window
+  // stays tucked away and nothing is moved automatically.
+  let floating = false;
   const collapse = async () => {
     if (clients.size === 0) return;
     const w = await win.readerWindow(port);
@@ -86,11 +89,11 @@ export function startServer({ port = DEFAULT_PORT, win = desktop, idleExit = tru
   };
   const backToAgent = async () => {
     const { host } = readJson('agent.json');
-    await collapse();
+    if (!floating) await collapse();
     return win.focusApp(host);
   };
   const autoSwitch = (event) => {
-    if (!readJson('config.json').autoSwitch) return Promise.resolve();
+    if (floating || !readJson('config.json').autoSwitch) return Promise.resolve();
     if (event === 'needs-you' || event === 'stop') return backToAgent();
     if (event === 'start' || event === 'resume') return expand();
     return Promise.resolve();
@@ -156,6 +159,13 @@ export function startServer({ port = DEFAULT_PORT, win = desktop, idleExit = tru
           await expand();
           return json(res, 200, { ok: true });
         }
+        if (pathname === '/api/float') {
+          floating = Boolean(body.on);
+          json(res, 200, { floating });
+          // Tuck the main window away while the card floats; bring it back after.
+          await (floating ? collapse() : expand()).catch(logError);
+          return;
+        }
         if (pathname === '/api/open') return json(res, 200, { opened: maybeOpen(true), clients: clients.size });
         if (pathname === '/api/refresh') {
           broadcast();
@@ -178,6 +188,7 @@ export function startServer({ port = DEFAULT_PORT, win = desktop, idleExit = tru
         if (Date.now() - lastOpen < 20_000) setTimeout(() => fitNewWindow().catch(logError), 300);
         req.on('close', () => {
           clients.delete(res);
+          if (clients.size === 0) floating = false; // no reader left, so no card either
           lastActivity = Date.now();
         });
         return;

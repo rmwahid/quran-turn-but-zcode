@@ -181,3 +181,80 @@ button, input { font: inherit; color: inherit; }
   .stage { padding: 20px 18px 14px; }
   .verified { display: none; }
 }
+
+/* ── Float mode: the ayah card in its own always-on-top window ─────────────── */
+.float-body { padding: 0; height: 100vh; overflow: hidden; background: var(--card); }
+.fcard {
+  height: 100vh; display: flex; flex-direction: column; background: var(--card); color: var(--ink);
+  transition: opacity 0.4s ease;
+}
+.fcard[data-status="done"], .fcard[data-status="idle"] { opacity: 0.92; }
+.fbar {
+  flex-shrink: 0; height: 34px; padding: 0 8px 0 14px; display: flex; align-items: center; gap: 10px;
+  border-bottom: 1px solid var(--soft); font-size: 11px;
+}
+.fstatus { display: flex; align-items: center; gap: 7px; font-weight: 600; color: var(--muted); flex: 1; min-width: 0; white-space: nowrap; }
+.fdot { width: 7px; height: 7px; border-radius: 999px; background: var(--muted); transition: background-color 0.3s ease; flex-shrink: 0; }
+.fcard[data-status="working"] .fdot { background: var(--teal); animation: pulse 1.8s ease-out infinite; }
+.fcard[data-status="working"] .fstatus { color: var(--ink); }
+.fcard[data-status="needs_you"] .fdot { background: var(--brass); }
+.fref { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; color: var(--muted); white-space: nowrap; }
+.ficon {
+  width: 24px; height: 24px; border: none; border-radius: 6px; background: transparent; color: var(--muted);
+  font-size: 16px; line-height: 1; cursor: pointer;
+}
+.ficon:hover { background: var(--hover); color: var(--ink); }
+
+/* The alert strip opens and closes by animating its row height (0fr ↔ 1fr). */
+.falert {
+  flex-shrink: 0; display: grid; grid-template-rows: 0fr; opacity: 0;
+  transition: grid-template-rows 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.22s ease;
+}
+.falert.show { grid-template-rows: 1fr; opacity: 1; }
+.falert-inner {
+  overflow: hidden; min-height: 0; display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 0 14px; font-size: 12px; font-weight: 700;
+}
+.falert.show .falert-inner { padding: 8px 14px; }
+.falert[data-kind="needs_you"] { background: var(--needs-bg); color: var(--needs-ink); border-bottom: 1px solid var(--needs-line); }
+.falert[data-kind="done"] { background: var(--done-bg); color: var(--done-ink); border-bottom: 1px solid var(--done-line); }
+.falert-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.falert-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.fback {
+  height: 28px; padding: 0 12px; border: none; border-radius: 999px; cursor: pointer;
+  background: var(--ink); color: var(--card); font-size: 11px; font-weight: 700; white-space: nowrap;
+}
+.fback:hover { filter: brightness(1.15); }
+.fkey { font-family: var(--mono); font-size: 9px; padding: 1px 5px; border-radius: 4px; border: 1px solid currentColor; opacity: 0.7; }
+
+.fstage { flex: 1; min-height: 0; overflow-y: auto; display: flex; padding: 10px 18px; }
+.fayah {
+  margin: auto 0; width: 100%; text-align: center; font-family: var(--quran);
+  font-size: var(--float-size, 22px); line-height: 1.95;
+}
+.fayah .basmala { font-size: 0.78em; }
+.fayah-end { color: var(--marker); white-space: nowrap; }
+.fnav {
+  flex-shrink: 0; height: 36px; padding: 0 8px; display: flex; align-items: center; justify-content: space-between;
+  border-top: 1px solid var(--soft);
+}
+.fnav-btn {
+  width: 40px; height: 28px; border: 1px solid var(--line); border-radius: 999px; background: transparent;
+  color: var(--ink); font-size: 13px; cursor: pointer;
+}
+.fnav-btn:hover { background: var(--hover); }
+.fcounter { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+.fback:focus-visible, .fnav-btn:focus-visible, .ficon:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .falert, .fcard, .fdot { transition: none; } }
+
+/* The Float button in the main reader's header. */
+.bar-right { display: flex; align-items: center; gap: 12px; }
+.float-btn {
+  height: 26px; padding: 0 10px; border-radius: 999px; border: 1px solid var(--line); background: transparent;
+  font-size: 11px; font-weight: 700; color: var(--ink); cursor: pointer; display: inline-flex; align-items: center; gap: 5px;
+}
+.float-btn:hover { background: var(--hover); }
+.float-btn:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+.float-btn.nudge { animation: nudge 1.6s ease-in-out 2; }
+@keyframes nudge { 0%, 100% { box-shadow: 0 0 0 0 transparent; } 50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--teal) 25%, transparent); } }
+@media (max-height: 180px) { .float-btn { display: none; } }
