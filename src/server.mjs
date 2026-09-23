@@ -3,7 +3,7 @@
 import { readFile } from 'node:fs/promises';
 import http from 'node:http';
 import { extname, join, normalize } from 'node:path';
-import { ROOT, loadMeta } from './quran.mjs';
+import { ROOT, VERSION, loadMeta } from './quran.mjs';
 import { applyHook, logError, readJson, setPosition, validPosition } from './state.mjs';
 import * as desktop from './window.mjs';
 
@@ -32,11 +32,14 @@ export function snapshot() {
     config: readJson('config.json'),
     // Whether the reader can offer "Back to Claude/Codex" (macOS + a known host app).
     canSwitch: desktop.canSwitch() && desktop.validBundleId(agent.host),
+    // The reader reloads itself when this differs from its own version (after an update).
+    version: VERSION,
   };
 }
 
 // win: window control, injectable for tests (see src/window.mjs).
-export function startServer({ port = DEFAULT_PORT, win = desktop, idleExit = true } = {}) {
+// onShutdown: what /api/shutdown does after closing (a newer version takes over).
+export function startServer({ port = DEFAULT_PORT, win = desktop, idleExit = true, onShutdown = () => process.exit(0) } = {}) {
   const meta = loadMeta();
   const counts = meta.Sura.map((s) => s[1] ?? 0);
   const clients = new Set();
@@ -167,6 +170,14 @@ export function startServer({ port = DEFAULT_PORT, win = desktop, idleExit = tru
           return;
         }
         if (pathname === '/api/open') return json(res, 200, { opened: maybeOpen(true), clients: clients.size });
+        if (pathname === '/api/shutdown') {
+          // A hook from a newer plugin version asks this (older) server to step aside.
+          json(res, 200, { ok: true, version: VERSION });
+          clearInterval(heartbeat);
+          for (const c of clients) c.end();
+          server.close(() => onShutdown());
+          return;
+        }
         if (pathname === '/api/refresh') {
           broadcast();
           return json(res, 200, { ok: true });
@@ -175,7 +186,7 @@ export function startServer({ port = DEFAULT_PORT, win = desktop, idleExit = tru
       }
 
       if (req.method !== 'GET') return json(res, 405, { error: 'method not allowed' });
-      if (pathname === '/api/health') return json(res, 200, { ok: true, app: 'quran-turn', clients: clients.size });
+      if (pathname === '/api/health') return json(res, 200, { ok: true, app: 'quran-turn', version: VERSION, clients: clients.size });
       if (pathname === '/api/state') return json(res, 200, snapshot());
       if (pathname === '/api/events') {
         res.writeHead(200, {

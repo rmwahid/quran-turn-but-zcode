@@ -6,6 +6,8 @@ import { parseTanzil } from '../app/quran-core.js';
 export const ROOT = fileURLToPath(new URL('..', import.meta.url));
 export const TEXT_PATH = `${ROOT}data/quran-uthmani.txt`;
 export const META_PATH = `${ROOT}data/quran-data.js`;
+// The installed plugin's version (package.json), shared by the CLI, hooks and server.
+export const VERSION = JSON.parse(readFileSync(`${ROOT}package.json`, 'utf8')).version;
 
 // Tanzil metadata is a browser script (`var QuranData = {...}`); run it in a sandbox.
 export function loadMeta() {

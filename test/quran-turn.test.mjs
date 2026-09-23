@@ -71,6 +71,8 @@ describe('Qur’an text', () => {
     assert.equal(v('.claude-plugin/plugin.json'), pkg);
     assert.equal(v('.codex-plugin/plugin.json'), pkg);
     assert.match(readFileSync(join(ROOT, 'app/config.js'), 'utf8'), new RegExp(`VERSION = '${pkg.replaceAll('.', '\\.')}'`));
+    // Every release needs its changelog entry (release notes and the site timeline come from it).
+    assert.match(readFileSync(join(ROOT, 'CHANGELOG.md'), 'utf8'), new RegExp(`^## \\[${pkg.replaceAll('.', '\\.')}\\] - \\d{4}-\\d{2}-\\d{2}$`, 'm'));
   });
 
   test('parser rejects tampering', () => {
@@ -392,6 +394,23 @@ describe('server', () => {
       sse.body?.cancel().catch(() => {});
       srv.close();
     }
+  });
+
+  test('updates: health reports the version, and an old server steps aside on request', async () => {
+    const { startServer } = await import('../src/server.mjs');
+    const { VERSION } = await import('../src/quran.mjs');
+    const port = 47000 + Math.floor(Math.random() * 900);
+    let stepped = false;
+    await startServer({ port, win: fakeWin(), idleExit: false, onShutdown: () => { stepped = true; } });
+    const base = `http://127.0.0.1:${port}`;
+    const health = await (await fetch(base + '/api/health')).json();
+    assert.equal(health.version, VERSION);
+    assert.equal((await (await fetch(base + '/api/state')).json()).version, VERSION, 'the reader sees the version too');
+    const r = await fetch(base + '/api/shutdown', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
+    assert.equal(r.status, 200);
+    await new Promise((res) => setTimeout(res, 100));
+    assert.ok(stepped, 'server closed and handed over');
+    await assert.rejects(fetch(base + '/api/health'), 'port is free for the new version');
   });
 
   test('only real bundle ids are ever passed to `open -b`', async () => {

@@ -125,29 +125,29 @@ quran-turn start juz 30
 
 ## Updating
 
-A new version is released automatically whenever the version number changes on `main` (see `.github/workflows/release.yml`). To get it:
+New versions are released automatically, and **[CHANGELOG.md](CHANGELOG.md)** lists everything that changed (also on [quran.allrize.tech](https://quran.allrize.tech/#changelog)). Updating takes one of three routes, and the reader handles the rest.
 
-- **Claude Code:** turn on auto-update for the `quran-turn` marketplace in `/plugin` → Marketplaces. Or update by hand:
+**1. Set it once (Claude Code, recommended).** Run `/plugin`, go to **Marketplaces**, choose **quran-turn** and pick **Enable auto-update**. Claude Code then checks for new versions in the background after it starts. Run `/reload-plugins` when it tells you, or the update loads the next time you start Claude Code. Third-party marketplaces have auto-update off by default, which is why this step is needed once.
 
-  ```bash
-  claude plugin marketplace update quran-turn
-  ```
+**2. Or ask your agent.** Paste this into Claude Code:
 
-  ```bash
-  claude plugin update quran-turn@quran-turn
-  ```
+```text
+Update the Quran Turn plugin: run `claude plugin marketplace update quran-turn` and then `claude plugin update quran-turn@quran-turn`. When it says it updated, tell me to run /reload-plugins.
+```
 
-- **Codex:**
+Or paste this into Codex:
 
-  ```bash
-  codex plugin marketplace upgrade quran-turn
-  ```
+```text
+Update the Quran Turn plugin: run `codex plugin marketplace upgrade quran-turn` and then `codex plugin add quran-turn@quran-turn`. When both succeed, tell me to restart Codex.
+```
 
-  ```bash
-  codex plugin add quran-turn@quran-turn
-  ```
+**3. Or run the commands yourself** (the same ones as above).
 
-Restart the agent afterwards. Your reading position and log live in `~/.quran-turn` and are never touched by an update.
+**That's all.** On your next prompt, the reader swaps itself to the new version and an open reader window reloads on its own. You don't need to stop anything. Your place and reading log in `~/.quran-turn` are never touched by an update.
+
+> Coming from **v0.4.0 or earlier**? Refresh or close the reader window once after updating, because the self-reload arrived in v0.4.1. From then on it's automatic.
+
+**Which version am I on?** It's in the reader's footer ("visit quran.allrize.tech for updates · v0.4.1"). Click it and the site tells you whether a newer version exists.
 
 ## Using the reader
 

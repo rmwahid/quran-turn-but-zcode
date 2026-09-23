@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 // quran-turn — read the Qur'an while your coding agent takes its turn.
-import { spawn } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { buildSearchIndex, resolveQuery } from '../app/quran-core.js';
-import { formatRef, loadMeta, loadQuran } from '../src/quran.mjs';
+import { VERSION, formatRef, loadMeta, loadQuran } from '../src/quran.mjs';
 import { DEFAULT_PORT, startServer } from '../src/server.mjs';
 import { applyHook, home, logError, readJson, readSessions, setPosition, writeJson } from '../src/state.mjs';
 
@@ -26,10 +26,35 @@ async function call(path, body, timeout = 600) {
   return res.json();
 }
 
+// Servers from before v0.4.1 have no /api/shutdown. Stop the process listening
+// on the reader's port, but only if it really is a `quran-turn serve`.
+function stopOldServer() {
+  if (process.platform === 'win32') return;
+  try {
+    const pids = execFileSync('lsof', ['-ti', `tcp:${port}`, '-sTCP:LISTEN'], { encoding: 'utf8', timeout: 2000 })
+      .split('\n').map(Number).filter(Boolean);
+    for (const pid of pids) {
+      const command = execFileSync('ps', ['-p', String(pid), '-o', 'command='], { encoding: 'utf8', timeout: 2000 });
+      if (/quran-turn\S*\s+serve\b/.test(command)) process.kill(pid);
+    }
+  } catch {}
+}
+
+// Make sure a reader server of *this* version is running. After a plugin update
+// the old server may still be up with old code: ask it to step aside first.
 async function ensureServer() {
   try {
     const h = await call('/api/health');
-    if (h.app === 'quran-turn') return true;
+    if (h.app === 'quran-turn' && h.version === VERSION) return true;
+    if (h.app === 'quran-turn') {
+      // v0.4.1+ servers step aside on request; older ones are stopped directly.
+      const asked = await call('/api/shutdown', {}).then(() => true, () => false);
+      if (!asked) stopOldServer();
+      for (let i = 0; i < 20; i++) {
+        await new Promise((r) => setTimeout(r, 50));
+        try { await call('/api/health', null, 200); } catch { break; } // port is free
+      }
+    }
   } catch {}
   if (process.env.QURAN_TURN_NO_SERVER) return false;
   const bin = fileURLToPath(import.meta.url);
@@ -88,6 +113,8 @@ async function hook(event) {
   const host = process.env.__CFBundleIdentifier || null;
   const body = { event, agent, host, session_id: payload.session_id ?? null };
   if (!readJson('config.json').enabled) return;
+  // A new turn is the moment to swap in a freshly updated server, if there is one.
+  if (event === 'start') await ensureServer();
   try {
     await call('/api/hook', body);
     return;

@@ -388,7 +388,21 @@ function onKey(e) {
   else if (k === 'f') { e.preventDefault(); startFloat(); }
 }
 
+// After a plugin update the server comes back as the new version; reload once
+// so the page runs the matching code too.
+function reloadIfUpdated(snap) {
+  if (!snap.version || snap.version === VERSION) return false;
+  const key = `quran-turn:reloaded-for:${snap.version}`;
+  try {
+    if (sessionStorage.getItem(key)) return false; // never loop
+    sessionStorage.setItem(key, '1');
+  } catch {}
+  location.reload();
+  return true;
+}
+
 function applySnapshot(snap) {
+  if (reloadIfUpdated(snap)) return;
   agent = snap.agent || agent;
   canSwitch = Boolean(snap.canSwitch);
   renderStatus();
@@ -407,7 +421,7 @@ async function init() {
   if (size) setSize(size);
 
   $('support').href = SUPPORT_URL;
-  $('site-note').href = SITE_URL;
+  $('site-note').href = `${SITE_URL}/?v=${VERSION}#update`;
   $('version').textContent = ` · v${VERSION}`;
   $('next').addEventListener('click', () => step(1));
   $('prev').addEventListener('click', () => step(-1));

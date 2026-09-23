@@ -44,5 +44,8 @@ jobs:
           fi
           npm pack
           sha256sum "quran-turn-$V.tgz" > "quran-turn-$V.tgz.sha256"
-          gh release create "v$V" --target "$GITHUB_SHA" --title "Quran Turn v$V" --generate-notes \
+          # Release notes = this version's section of CHANGELOG.md, plus how to update.
+          awk -v v="$V" '/^## \[/ { p = index($0, "[" v "]") > 0; next } p' CHANGELOG.md > notes.md
+          printf '\n---\n**Update:** Claude Code: `/plugin` → Marketplaces → quran-turn → Enable auto-update (once), or run `claude plugin marketplace update quran-turn && claude plugin update quran-turn@quran-turn`, then `/reload-plugins`. Codex: `codex plugin marketplace upgrade quran-turn && codex plugin add quran-turn@quran-turn`. The reader swaps itself over on your next prompt.\n' >> notes.md
+          gh release create "v$V" --target "$GITHUB_SHA" --title "Quran Turn v$V" --notes-file notes.md \
             "quran-turn-$V.tgz" "quran-turn-$V.tgz.sha256"
