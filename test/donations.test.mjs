@@ -75,3 +75,24 @@ describe('donations API (Cloudflare Pages Functions)', () => {
       'https://preview.quran-turn.pages.dev/?sedekah=success');
   });
 });
+
+describe('/agent page (Ngaji Companion for Muse)', () => {
+  test('the prompt on the page is byte-identical to the canonical text', async () => {
+    const { readFile } = await import('node:fs/promises');
+    const html = await readFile(new URL('../site/public/agent.html', import.meta.url), 'utf8');
+    const canonical = (await readFile(new URL('./fixtures/muse-prompt.txt', import.meta.url), 'utf8')).replace(/\n$/, '');
+    const m = html.match(/<pre class="agent-code" id="prompt"[^>]*>([\s\S]*?)<\/pre>/);
+    assert.ok(m, 'prompt <pre> found');
+    const text = m[1].replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+    assert.equal(text, canonical);
+  });
+
+  test('the Muse logo ships locally and the hero links to /agent in a new tab', async () => {
+    const { readFile } = await import('node:fs/promises');
+    const index = await readFile(new URL('../site/public/index.html', import.meta.url), 'utf8');
+    assert.match(index, /<a class="chip" href="https:\/\/quran\.allrize\.tech\/agent" target="_blank" rel="noopener"><img class="logo-muse" src="muse\.svg"/);
+    const svg = await readFile(new URL('../site/public/muse.svg', import.meta.url), 'utf8');
+    assert.match(svg, /^<svg /);
+    assert.ok(!/script/i.test(svg));
+  });
+});
