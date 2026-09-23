@@ -1,8 +1,8 @@
 // All state is plain JSON under ~/.quran-turn (or $QURAN_TURN_HOME):
 //   state.json      where you are:           {surah, ayah, updated_at}
-//   agent.json      what the agent is doing: {status, agent, session_id, turn_started_at, turn_from, ayat, last_turn}
+//   agent.json      what the agent is doing: {status, agent, host, session_id, turn_started_at, turn_from, ayat, last_turn}
 //   sessions.jsonl  one line per finished turn
-//   config.json     {enabled, autoOpen}
+//   config.json     {enabled, autoOpen, autoSwitch}
 // Delete any of them at any time; defaults come back.
 import { appendFileSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
@@ -13,7 +13,7 @@ export const home = () => process.env.QURAN_TURN_HOME || join(homedir(), '.quran
 const DEFAULTS = {
   'state.json': { surah: 1, ayah: 1, updated_at: null },
   'agent.json': { status: 'idle' },
-  'config.json': { enabled: true, autoOpen: true },
+  'config.json': { enabled: true, autoOpen: true, autoSwitch: true },
 };
 
 export function readJson(name) {
@@ -109,7 +109,8 @@ function finishTurn(agent, { interrupted = false } = {}) {
   return entry;
 }
 
-export function applyHook(event, { agent: agentName = 'claude', session_id = null } = {}) {
+// host: macOS bundle id of the app the agent runs in (for "Back to Claude").
+export function applyHook(event, { agent: agentName = 'claude', session_id = null, host = null } = {}) {
   const config = readJson('config.json');
   let agent = readJson('agent.json');
   const active = agent.status === 'working' || agent.status === 'needs_you';
@@ -122,6 +123,7 @@ export function applyHook(event, { agent: agentName = 'claude', session_id = nul
     agent = {
       status: 'working',
       agent: agentName,
+      host,
       session_id,
       turn_started_at: now(),
       turn_from: ref(readJson('state.json')),
@@ -136,7 +138,7 @@ export function applyHook(event, { agent: agentName = 'claude', session_id = nul
     agent = { ...agent, status: 'working' };
   } else if (event === 'stop') {
     if (!active || !sameSession) return agent;
-    agent = { status: 'done', agent: agent.agent, last_turn: finishTurn(agent) };
+    agent = { status: 'done', agent: agent.agent, host: agent.host, last_turn: finishTurn(agent) };
   } else {
     throw new Error(`Unknown hook event: ${event}`);
   }

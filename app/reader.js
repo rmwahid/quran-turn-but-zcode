@@ -11,6 +11,7 @@ const AGENT_NAMES = { claude: 'Claude', codex: 'Codex' };
 let quran = null;
 let pos = { surah: 1, ayah: 1 };
 let agent = { status: 'idle' };
+let canSwitch = false;
 let saving = Promise.resolve();
 let pendingSaves = 0;
 let doneTimer = null;
@@ -74,20 +75,30 @@ function renderStatus() {
     status === 'working' ? `${name} is working` : status === 'needs_you' ? 'Paused' : 'Idle';
 
   const banner = $('banner');
+  const back = $('back-btn');
+  back.textContent = `Back to ${name}`;
+  back.title = 'Space';
+  back.setAttribute('aria-keyshortcuts', 'Space');
+  back.hidden = !canSwitch;
+  $('back-hint').hidden = !canSwitch;
   clearTimeout(doneTimer);
   if (status === 'needs_you') {
     banner.dataset.kind = 'needs_you';
-    $('banner-title').textContent = `${name} needs your permission`;
-    $('banner-meta').textContent = 'back to terminal';
+    $('banner-title').textContent = `${name} needs you`;
+    $('banner-meta').textContent = canSwitch ? 'permission requested · reading paused' : 'permission requested · go back to your terminal';
     banner.hidden = false;
   } else if (status === 'done' && agent.last_turn && !banner.dataset.dismissed) {
+    const t = agent.last_turn;
     banner.dataset.kind = 'done';
-    $('banner-title').textContent = 'Turn finished · place saved';
-    $('banner-meta').textContent = `${agent.last_turn.from} → ${agent.last_turn.to}`;
+    $('banner-title').textContent = `Saved at ${t.to}`;
+    $('banner-meta').textContent = `turn finished · ${t.from} → ${t.to} · ${t.ayat} ${t.ayat === 1 ? 'ayah' : 'ayat'}`;
     banner.hidden = false;
     doneTimer = setTimeout(() => { banner.hidden = true; banner.dataset.dismissed = '1'; }, 60_000);
   } else {
     banner.hidden = true;
+    banner.dataset.kind = 'idle';
+    $('banner-title').textContent = `Saved at ${pos.surah}:${pos.ayah}`;
+    $('banner-meta').textContent = 'reading continues on your next prompt';
   }
   if (status === 'working') delete banner.dataset.dismissed;
 
@@ -113,7 +124,7 @@ function go(next) {
   saving = saving
     .then(() => fetch('/api/position', { method: 'POST', headers: { 'content-type': 'application/json' }, body }))
     .then((r) => (r.ok ? r.json() : null))
-    .then((snap) => { if (snap) { agent = snap.agent; renderStatus(); } })
+    .then((snap) => { if (snap) { agent = snap.agent; canSwitch = Boolean(snap.canSwitch); renderStatus(); } })
     .catch(() => {})
     .finally(() => { pendingSaves--; });
 }
@@ -217,6 +228,13 @@ function toggleTheme() {
 
 // ── Wiring ──────────────────────────────────────────────────────────────────
 
+function backToAgent() {
+  fetch('/api/back-to-agent', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' }).catch(() => {});
+}
+
+// When the agent is waiting on you (or done), Space/Enter jumps straight back to it.
+const agentWaiting = () => canSwitch && (agent.status === 'needs_you' || agent.status === 'done');
+
 function onKey(e) {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
   if (!$('jump').hidden) {
@@ -224,6 +242,10 @@ function onKey(e) {
     return;
   }
   const k = e.key;
+  if ((k === ' ' || k === 'Enter') && agentWaiting() && !e.target.closest?.('button, a, input')) {
+    e.preventDefault();
+    return backToAgent();
+  }
   // Arabic reads right-to-left, so ← moves forward.
   if (k === 'ArrowLeft' || k === 'j' || k === ' ') { e.preventDefault(); step(1); }
   else if (k === 'ArrowRight' || k === 'k') { e.preventDefault(); step(-1); }
@@ -235,6 +257,7 @@ function onKey(e) {
 
 function applySnapshot(snap) {
   agent = snap.agent || agent;
+  canSwitch = Boolean(snap.canSwitch);
   renderStatus();
   // Adopt a position changed elsewhere (another window, the CLI) when we're not mid-save.
   const p = snap.position;
@@ -254,6 +277,10 @@ async function init() {
   $('next').addEventListener('click', () => step(1));
   $('prev').addEventListener('click', () => step(-1));
   $('open-jump').addEventListener('click', openJump);
+  $('expand-btn').addEventListener('click', () => {
+    fetch('/api/expand', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' }).catch(() => {});
+  });
+  $('back-btn').addEventListener('click', backToAgent);
   $('close-jump').addEventListener('click', closeJump);
   $('jump-search').addEventListener('input', filterSurahs);
   $('jump-form').addEventListener('submit', submitJump);
@@ -277,6 +304,7 @@ async function init() {
     const snap = await (await fetch('/api/state', { cache: 'no-store' })).json();
     if (valid(snap.position)) pos = { surah: snap.position.surah, ayah: snap.position.ayah };
     agent = snap.agent;
+    canSwitch = Boolean(snap.canSwitch);
   } catch {
     try {
       const saved = JSON.parse(store.get('quran-turn:position'));

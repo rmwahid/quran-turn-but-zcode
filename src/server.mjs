@@ -5,7 +5,7 @@ import http from 'node:http';
 import { extname, join, normalize } from 'node:path';
 import { ROOT, loadMeta } from './quran.mjs';
 import { applyHook, logError, readJson, setPosition, validPosition } from './state.mjs';
-import { openWindow } from './window.mjs';
+import * as desktop from './window.mjs';
 
 export const DEFAULT_PORT = Number(process.env.QURAN_TURN_PORT) || 47114;
 const IDLE_EXIT_MS = 30 * 60 * 1000;
@@ -25,10 +25,18 @@ const MIME = {
 const STATIC = { '/data/': join(ROOT, 'data'), '/': join(ROOT, 'app') };
 
 export function snapshot() {
-  return { position: readJson('state.json'), agent: readJson('agent.json'), config: readJson('config.json') };
+  const agent = readJson('agent.json');
+  return {
+    position: readJson('state.json'),
+    agent,
+    config: readJson('config.json'),
+    // Whether the reader can offer "Back to Claude/Codex" (macOS + a known host app).
+    canSwitch: desktop.canSwitch() && desktop.validBundleId(agent.host),
+  };
 }
 
-export function startServer({ port = DEFAULT_PORT, open = openWindow, idleExit = true } = {}) {
+// win: window control, injectable for tests (see src/window.mjs).
+export function startServer({ port = DEFAULT_PORT, win = desktop, idleExit = true } = {}) {
   const meta = loadMeta();
   const counts = meta.Sura.map((s) => s[1] ?? 0);
   const clients = new Set();
@@ -45,8 +53,47 @@ export function startServer({ port = DEFAULT_PORT, open = openWindow, idleExit =
     if (clients.size > 0) return false;
     if (!force && (!readJson('config.json').autoOpen || Date.now() - lastOpen < REOPEN_GUARD_MS)) return false;
     lastOpen = Date.now();
-    open(url);
+    win.openWindow(url);
     return true;
+  };
+
+  // "Balancing": while the agent works the reader is full size and in front;
+  // when the agent needs you (or is done) it collapses to a small strip and the
+  // agent's app comes to the front. Its previous size is restored afterwards.
+  let savedBounds = null;
+  const collapse = async () => {
+    if (clients.size === 0) return;
+    const w = await win.readerWindow(port);
+    if (!w) return;
+    const [x1, y1, x2, y2] = w.bounds;
+    if (y2 - y1 > win.COMPACT.height + 40) savedBounds = w.bounds; // don't save an already-collapsed size
+    await win.setReaderBounds(w, [x1, y1, x1 + win.COMPACT.width, y1 + win.COMPACT.height]);
+  };
+  const fullAt = (x1, y1) => [x1, y1, x1 + win.FULL.width, y1 + win.FULL.height];
+  const tooBig = ([x1, y1, x2, y2]) => x2 - x1 > win.MAX.width || y2 - y1 > win.MAX.height;
+  const expand = async () => {
+    if (clients.size === 0) return;
+    const w = await win.readerWindow(port);
+    if (!w) return;
+    const target = savedBounds && !tooBig(savedBounds) ? savedBounds : fullAt(...(savedBounds || w.bounds));
+    await win.setReaderBounds(w, target, { front: true });
+  };
+  // Chrome may restore a remembered (even full-screen) size for a new app
+  // window; right after we open one, put it back to the reader's own size.
+  const fitNewWindow = async () => {
+    const w = await win.readerWindow(port);
+    if (w && tooBig(w.bounds)) await win.setReaderBounds(w, fullAt(w.bounds[0], w.bounds[1]));
+  };
+  const backToAgent = async () => {
+    const { host } = readJson('agent.json');
+    await collapse();
+    return win.focusApp(host);
+  };
+  const autoSwitch = (event) => {
+    if (!readJson('config.json').autoSwitch) return Promise.resolve();
+    if (event === 'needs-you' || event === 'stop') return backToAgent();
+    if (event === 'start' || event === 'resume') return expand();
+    return Promise.resolve();
   };
 
   const json = (res, status, body) => {
@@ -95,10 +142,19 @@ export function startServer({ port = DEFAULT_PORT, open = openWindow, idleExit =
           return json(res, 200, snapshot());
         }
         if (pathname === '/api/hook') {
-          applyHook(body.event, { agent: body.agent, session_id: body.session_id });
+          const before = readJson('agent.json').status;
+          const after = applyHook(body.event, { agent: body.agent, session_id: body.session_id, host: body.host }).status;
           broadcast();
-          if (body.event === 'start') maybeOpen();
-          return json(res, 200, { ok: true, clients: clients.size });
+          // Reply first so the hook returns immediately; windows move afterwards.
+          json(res, 200, { ok: true, clients: clients.size });
+          if (body.event === 'start' && maybeOpen()) return;
+          if (body.event === 'start' || after !== before) await autoSwitch(body.event).catch(logError);
+          return;
+        }
+        if (pathname === '/api/back-to-agent') return json(res, 200, { focused: await backToAgent() });
+        if (pathname === '/api/expand') {
+          await expand();
+          return json(res, 200, { ok: true });
         }
         if (pathname === '/api/open') return json(res, 200, { opened: maybeOpen(true), clients: clients.size });
         if (pathname === '/api/refresh') {
@@ -119,6 +175,7 @@ export function startServer({ port = DEFAULT_PORT, open = openWindow, idleExit =
         });
         res.write(`data: ${JSON.stringify(snapshot())}\n\n`);
         clients.add(res);
+        if (Date.now() - lastOpen < 20_000) setTimeout(() => fitNewWindow().catch(logError), 300);
         req.on('close', () => {
           clients.delete(res);
           lastActivity = Date.now();

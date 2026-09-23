@@ -65,6 +65,13 @@ describe('Qur’an text', () => {
     assert.ok(checked > 0);
   });
 
+  test('package.json and both plugin manifests carry the same version', () => {
+    const v = (f) => JSON.parse(readFileSync(join(ROOT, f), 'utf8')).version;
+    const pkg = v('package.json');
+    assert.equal(v('.claude-plugin/plugin.json'), pkg);
+    assert.equal(v('.codex-plugin/plugin.json'), pkg);
+  });
+
   test('parser rejects tampering', () => {
     assert.throws(() => parseTanzil('1|1|a\n1|1|b\n'), /Duplicate/);
     assert.throws(() => parseTanzil('1|1|\n'), /Empty/);
@@ -179,14 +186,37 @@ describe('hook CLI', () => {
 });
 
 describe('server', () => {
-  test('serves the reader, validates input, applies hooks and refuses foreign hosts', async () => {
+  const fakeWin = () => {
+    const calls = [];
+    return {
+      calls,
+      openWindow: (u) => calls.push(['open', u]),
+      focusApp: (id) => (calls.push(['focus', id]), true),
+      COMPACT: { width: 380, height: 112 },
+      FULL: { width: 460, height: 740 },
+      MAX: { width: 560, height: 900 },
+      bounds: [100, 50, 560, 790],
+      async readerWindow() { return { id: 7, bounds: this.bounds }; },
+      async setReaderBounds(w, b, { front = false } = {}) {
+        this.bounds = b;
+        calls.push([b[3] - b[1] < 200 ? 'collapse' : 'expand', front]);
+        return true;
+      },
+    };
+  };
+  const boot = async (win) => {
     const { startServer } = await import('../src/server.mjs');
-    const opened = [];
     const port = 47000 + Math.floor(Math.random() * 900);
-    const srv = await startServer({ port, open: (u) => opened.push(u), idleExit: false });
+    const srv = await startServer({ port, win, idleExit: false });
     const base = `http://127.0.0.1:${port}`;
     const post = (path, body, headers = {}) =>
       fetch(base + path, { method: 'POST', headers: { 'content-type': 'application/json', ...headers }, body: JSON.stringify(body) });
+    return { srv, base, post };
+  };
+
+  test('serves the reader, validates input, applies hooks and refuses foreign hosts', async () => {
+    const win = fakeWin();
+    const { srv, base, post } = await boot(win);
     try {
       assert.equal((await fetch(base + '/')).status, 200);
       const txt = await (await fetch(base + '/data/quran-uthmani.txt')).arrayBuffer();
@@ -199,9 +229,9 @@ describe('server', () => {
       assert.equal((await post('/api/position', { surah: 2, ayah: 1 }, { origin: 'https://evil.example' })).status, 403);
 
       assert.equal((await post('/api/hook', { event: 'start', agent: 'claude' })).status, 200);
-      assert.equal(opened.length, 1, 'opens the window when no reader is connected');
+      assert.equal(win.calls.filter((c) => c[0] === 'open').length, 1, 'opens the window when no reader is connected');
       await post('/api/hook', { event: 'start', agent: 'claude' });
-      assert.equal(opened.length, 1, 'does not reopen within the guard window');
+      assert.equal(win.calls.filter((c) => c[0] === 'open').length, 1, 'does not reopen within the guard window');
 
       const state = await (await fetch(base + '/api/state')).json();
       assert.equal(state.position.ayah, 255);
@@ -209,5 +239,77 @@ describe('server', () => {
     } finally {
       srv.close();
     }
+  });
+
+  test('balancing: steps aside for the agent on needs-you / stop, comes back on resume / start', async () => {
+    const win = fakeWin();
+    const { srv, base, post } = await boot(win);
+    // A connected reader (SSE client) so the window is considered open.
+    const ctrl = new AbortController();
+    const sse = await fetch(base + '/api/events', { signal: ctrl.signal });
+    try {
+      const host = 'com.anthropic.claudefordesktop';
+      const settle = () => new Promise((r) => setTimeout(r, 50)); // windows move after the hook reply
+      await post('/api/hook', { event: 'start', agent: 'claude', host, session_id: 's' });
+      await settle();
+      win.calls.length = 0;
+
+      await post('/api/hook', { event: 'needs-you', session_id: 's' });
+      await settle();
+      assert.deepEqual(win.calls, [['collapse', false], ['focus', host]]);
+      assert.deepEqual(win.bounds, [100, 50, 480, 162], 'collapses in place to the compact strip');
+      win.calls.length = 0;
+
+      await post('/api/hook', { event: 'resume', session_id: 's' });
+      await settle();
+      assert.deepEqual(win.calls, [['expand', true]]);
+      assert.deepEqual(win.bounds, [100, 50, 560, 790], 'restores the exact previous size');
+      win.calls.length = 0;
+
+      await post('/api/hook', { event: 'stop', session_id: 's' });
+      await settle();
+      assert.deepEqual(win.calls, [['collapse', false], ['focus', host]]);
+      win.calls.length = 0;
+
+      // A full-screen window never comes back full screen: capped to the reader size.
+      await post('/api/hook', { event: 'start', agent: 'claude', host, session_id: 's2' });
+      await settle();
+      win.bounds = [-2560, 0, 0, 1440]; // the user maximized it mid-turn
+      await post('/api/hook', { event: 'needs-you', session_id: 's2' });
+      await settle();
+      await post('/api/hook', { event: 'resume', session_id: 's2' });
+      await settle();
+      assert.deepEqual(win.bounds, [-2560, 0, -2100, 740]);
+      await post('/api/hook', { event: 'stop', session_id: 's2' });
+      await settle();
+      win.calls.length = 0;
+
+      // The reader's own buttons: "Open reader" and "Back to Claude".
+      await post('/api/expand', {});
+      assert.deepEqual(win.calls, [['expand', true]]);
+      win.calls.length = 0;
+      assert.equal((await (await post('/api/back-to-agent', {})).json()).focused, true);
+      assert.deepEqual(win.calls, [['collapse', false], ['focus', host]]);
+
+      // Turned off: hooks no longer move windows.
+      win.calls.length = 0;
+      const { writeJson, readJson } = await state;
+      writeJson('config.json', { ...readJson('config.json'), autoSwitch: false });
+      await post('/api/hook', { event: 'start', agent: 'claude', host, session_id: 't' });
+      await post('/api/hook', { event: 'stop', session_id: 't' });
+      await settle();
+      assert.deepEqual(win.calls, []);
+    } finally {
+      ctrl.abort();
+      sse.body?.cancel().catch(() => {});
+      srv.close();
+    }
+  });
+
+  test('only real bundle ids are ever passed to `open -b`', async () => {
+    const { validBundleId } = await import('../src/window.mjs');
+    assert.ok(validBundleId('com.anthropic.claudefordesktop'));
+    assert.ok(validBundleId('com.googlecode.iterm2'));
+    for (const bad of [null, '', 'Claude', '-a Calculator', 'com.x;rm -rf', 'com..x']) assert.ok(!validBundleId(bad), String(bad));
   });
 });

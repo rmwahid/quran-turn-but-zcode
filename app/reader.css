@@ -71,7 +71,34 @@ button, input { font: inherit; color: inherit; }
 }
 .banner[data-kind="needs_you"] { background: var(--needs-bg); border-bottom: 1px solid var(--needs-line); color: var(--needs-ink); }
 .banner[data-kind="done"] { background: var(--done-bg); border-bottom: 1px solid var(--done-line); color: var(--done-ink); }
+.banner-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .banner-meta { font-family: var(--mono); font-size: 11px; font-weight: 400; opacity: 0.85; }
+.banner-btn {
+  flex-shrink: 0; height: 34px; padding: 0 14px; border-radius: 999px; border: none; cursor: pointer;
+  background: var(--ink); color: var(--card); font-size: 12px; font-weight: 700; white-space: nowrap;
+}
+.banner-btn:hover { filter: brightness(1.15); }
+.banner-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.key-hint { font-family: var(--mono); font-size: 10px; padding: 2px 6px; border-radius: 5px; border: 1px solid currentColor; opacity: 0.7; }
+.banner-btn-quiet { background: transparent; color: inherit; border: 1px solid currentColor; opacity: 0.8; }
+#expand-btn { display: none; }
+
+/* Compact strip: the window is collapsed while the agent needs you or is done. */
+@media (max-height: 180px) {
+  body { padding: 6px; }
+  .frame { border-radius: 14px; }
+  .bar { height: 34px; padding: 0 14px; }
+  .stage, .nav, .foot, .sheet { display: none !important; }
+  .banner { flex-grow: 1; padding: 8px 14px; border-bottom: none; }
+  .banner[hidden] { display: flex !important; }
+  .banner-title { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .banner-meta { display: none; }
+  .banner-text { flex: 1; }
+  .banner-actions { gap: 6px; }
+  .banner-btn { height: 30px; padding: 0 12px; font-size: 11px; }
+  #expand-btn { display: inline-block; }
+}
+.banner-btn:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
 
 /* The stage scrolls for very long ayat (e.g. 2:282) instead of clipping. */
 .stage { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; padding: 26px 30px 18px; }

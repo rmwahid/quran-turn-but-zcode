@@ -2,7 +2,7 @@
 
 **Read the Qur'an while your coding agent thinks.**
 
-Quran Turn is a plugin for **Claude Code** and **Codex**. When you send your agent a prompt, a quiet reader window opens at the exact ayah you left off. When the agent needs your permission, the reader pauses and points you back to the terminal. When the turn ends, your place is saved.
+Quran Turn is a plugin for **Claude Code** and **Codex**. When you send your agent a prompt, a quiet reader window opens at the exact ayah you left off. When the agent needs you, the reader shrinks to a small strip and brings your agent back to the front (one press of Space). When the turn ends, your place is saved automatically.
 
 <p align="center">
   <img src="docs/reader-working.png" width="260" alt="Reader while Claude is working, showing Al-Baqara 2:155">
@@ -72,24 +72,54 @@ Then send any prompt. The reader opens as a small app window if Chrome, Edge, Br
 ## How it works
 
 ```
- you send a prompt ─▶ UserPromptSubmit ─▶ reader opens · "Claude is working" · counts ayat you read
+ you send a prompt ─▶ UserPromptSubmit ─▶ reader opens (or grows back) · "Claude is working" · counts ayat
                                             │
-   agent asks approval ─▶ PermissionRequest ─▶ "Claude needs your permission" · counting pauses
+   agent asks approval ─▶ PermissionRequest ─▶ reader shrinks to a small strip · Claude comes to the front
                                             │
-     you approve, tool runs ─▶ PostToolUse ─▶ back to working
+     you approve, tool runs ─▶ PostToolUse ─▶ reader grows back to where you were reading
                                             │
-             turn ends ─▶ Stop ─▶ place saved · one line appended to your reading log
+             turn ends ─▶ Stop ─▶ place saved automatically · reader shrinks · Claude comes to the front
 ```
 
+- **Your place saves itself.** Every ayah you move is written to disk at once, and the Stop hook closes the turn. You never need to run a command; `quran-turn log` is only there if you're curious.
+- **Back to your agent in one key.** When the agent needs you or is done, the strip shows **Back to Claude** (or Codex). Click it or press **Space**, and the app you're running the agent in (the Claude desktop app, Codex, Terminal, iTerm, VS Code…) comes to the front.
+- **A side window, never full screen.** The reader opens at 460×740, shrinks to a 380×112 strip, and grows back to your size, capped so it never returns full screen. Turn the automatic shrinking off with `quran-turn switch off`. Window switching is macOS-only for now, and the first time, macOS asks to let your agent's app control your browser.
 - **Hooks:** they call `bin/quran-turn hook <event>`, print nothing (agents read hook output as context), always exit 0, and take about 40 ms.
 - **Reader server:** a tiny local server on `127.0.0.1:47114` serves the reader. The first hook starts it, and it exits after 30 minutes with no reader connected.
 - **One hooks file for both agents:** Codex provides `CLAUDE_PLUGIN_ROOT` as an alias and also sets `PLUGIN_ROOT`, which is how Quran Turn tells the two apart.
+
+## Updating
+
+A new version is released automatically whenever the version number changes on `main` (see `.github/workflows/release.yml`). To get it:
+
+- **Claude Code:** turn on auto-update for the `quran-turn` marketplace in `/plugin` → Marketplaces. Or update by hand:
+
+  ```bash
+  claude plugin marketplace update quran-turn
+  ```
+
+  ```bash
+  claude plugin update quran-turn@quran-turn
+  ```
+
+- **Codex:**
+
+  ```bash
+  codex plugin marketplace upgrade quran-turn
+  ```
+
+  ```bash
+  codex plugin add quran-turn@quran-turn
+  ```
+
+Restart the agent afterwards. Your reading position and log live in `~/.quran-turn` and are never touched by an update.
 
 ## Using the reader
 
 | Key | Action |
 |---|---|
-| `←` `j` `space` | Next ayah (Arabic reads right to left) |
+| `←` `j` `space` | Next ayah while the agent works (Arabic reads right to left) |
+| `space` / `enter` | **Back to Claude/Codex**, when it needs you or is done |
 | `→` `k` | Previous ayah |
 | `g` | Go to a surah, or type `2:255` |
 | `+` / `-` | Text size |
@@ -101,6 +131,7 @@ quran-turn where       your current position        → Al-Baqara 2:157  الب�
 quran-turn log [n]     your last n turns            → Sep 22, 8:42 PM  2:153 → 2:157  4 ayat  claude
 quran-turn status      one line for a status bar    → ☾ quran-turn · Al-Baqara 2:157 · reading
 quran-turn on | off    enable or pause the hooks
+quran-turn switch on | off   shrink the reader when the agent needs you (macOS)
 ```
 
 (From a clone, run these as `node bin/quran-turn …`.)
@@ -114,7 +145,7 @@ Everything is plain JSON in `~/.quran-turn/` (override with `QURAN_TURN_HOME`):
 | `state.json` | where you are: `{"surah": 2, "ayah": 157}` |
 | `agent.json` | whether the agent is working, waiting on you, or done |
 | `sessions.jsonl` | one line per turn: `{"from":"2:153","to":"2:157","ayat":4,"agent":"claude", …}` |
-| `config.json` | `{"enabled": true, "autoOpen": true}` |
+| `config.json` | `{"enabled": true, "autoOpen": true, "autoSwitch": true}` |
 
 Your prompts, code and anything else from your agent session are **never** stored. Delete these files whenever you like.
 

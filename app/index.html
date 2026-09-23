@@ -20,8 +20,15 @@
   </header>
 
   <div class="banner" id="banner" hidden>
-    <span class="banner-title" id="banner-title"></span>
-    <span class="banner-meta" id="banner-meta"></span>
+    <div class="banner-text">
+      <span class="banner-title" id="banner-title"></span>
+      <span class="banner-meta" id="banner-meta"></span>
+    </div>
+    <div class="banner-actions">
+      <button type="button" class="banner-btn banner-btn-quiet" id="expand-btn" title="Open the reader again">Open</button>
+      <button type="button" class="banner-btn" id="back-btn" hidden>Back to Claude</button>
+      <kbd class="key-hint" id="back-hint" hidden>space</kbd>
+    </div>
   </div>
 
   <section class="stage" id="stage">

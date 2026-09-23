@@ -83,7 +83,9 @@ async function hook(event) {
   if (event === 'stop' && status !== 'working' && status !== 'needs_you') return;
   const payload = await readStdin();
   const agent = flag('agent') || (process.env.PLUGIN_ROOT ? 'codex' : 'claude');
-  const body = { event, agent, session_id: payload.session_id ?? null };
+  // The app this agent runs in (macOS sets this for every process an app launches).
+  const host = process.env.__CFBundleIdentifier || null;
+  const body = { event, agent, host, session_id: payload.session_id ?? null };
   if (!readJson('config.json').enabled) return;
   try {
     await call('/api/hook', body);
@@ -113,6 +115,7 @@ const HELP = `quran-turn — read the Qur'an while your coding agent takes its t
   quran-turn log [n]        the last n turns (default 10)
   quran-turn status         one-line status (for a terminal status line)
   quran-turn on | off       enable or pause the hooks
+  quran-turn switch on|off  auto-minimize the reader when the agent needs you (macOS)
   quran-turn serve          run the local reader server (hooks start it for you)
   quran-turn hook <event>   called by agent hooks: start | needs-you | resume | stop
 
@@ -159,6 +162,14 @@ try {
       writeJson('config.json', { ...readJson('config.json'), enabled: cmd === 'on' });
       console.log(cmd === 'on' ? 'quran-turn hooks enabled.' : 'quran-turn hooks paused. Run `quran-turn on` to resume.');
       break;
+    case 'switch': {
+      const on = rest[0] !== 'off';
+      writeJson('config.json', { ...readJson('config.json'), autoSwitch: on });
+      console.log(on
+        ? 'Auto-switch on: the reader steps aside when the agent needs you or finishes.'
+        : 'Auto-switch off: windows stay where you put them.');
+      break;
+    }
     default:
       console.log(HELP);
   }
