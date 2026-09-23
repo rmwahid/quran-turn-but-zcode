@@ -2,6 +2,14 @@
 
 Every release of Quran Turn. The newest is on top. GitHub release notes and the timeline on [quran.allrize.tech](https://quran.allrize.tech/#changelog) are generated from this file.
 
+## [0.5.1] - 2026-09-23
+
+Codex installation and update instructions now include the hook trust step.
+
+- **Codex hooks need a separate review.** After installing, open interactive Codex CLI and use `/hooks` to review and trust Quran Turn's four hooks. Codex skips untrusted hooks even when the plugin is installed and enabled.
+- **Update instructions are explicit** in the README and on the landing page: refresh the marketplace, install the new version, check `codex plugin list`, restart the desktop app, and review any changed hooks.
+- The reader and Qur'an data are unchanged. Updating keeps your place.
+
 ## [0.5.0] - 2026-09-23
 
 Ngaji Companion for Muse, and a tidier site.

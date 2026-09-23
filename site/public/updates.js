@@ -65,7 +65,7 @@ function renderStatus(releases) {
       box.dataset.state = 'behind';
       box.replaceChildren(
         el('strong', { textContent: `You're on v${mine} · v${latest} is out` }),
-        el('span', { textContent: ` · ${behind.length} update${behind.length === 1 ? '' : 's'} since yours. Pick any route below; the reader swaps itself over on your next prompt.` }));
+        el('span', { textContent: ` · ${behind.length} update${behind.length === 1 ? '' : 's'} since yours. Follow the steps below; Codex also needs trusted hooks before the reader opens.` }));
     } else {
       box.dataset.state = 'current';
       box.replaceChildren(el('strong', { textContent: `You're up to date · v${mine}` }), el('span', { textContent: ' · nothing to do.' }));

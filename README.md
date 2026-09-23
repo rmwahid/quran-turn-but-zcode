@@ -30,7 +30,7 @@ Install the Quran Turn plugin for me. In the terminal, run `claude plugin market
 Paste this into **Codex** (CLI or the Codex app):
 
 ```text
-Install the Quran Turn plugin for me. In the terminal, run `codex plugin marketplace add rzrizaldy/quran-turn` and then `codex plugin add quran-turn@quran-turn`. When both succeed, tell me to restart Codex and approve Quran Turn's hooks when it asks.
+Install Quran Turn for Codex. Run `codex plugin marketplace add rzrizaldy/quran-turn`, then `codex plugin add quran-turn@quran-turn`, and check `codex plugin list` for an enabled Quran Turn. Tell me to open an interactive Codex CLI session, run `/hooks`, review and trust Quran Turn's four hooks, then start a new turn. Do not bypass hook trust.
 ```
 
 ### Or run the commands yourself
@@ -55,7 +55,9 @@ codex plugin marketplace add rzrizaldy/quran-turn
 codex plugin add quran-turn@quran-turn
 ```
 
-Then start `codex` and approve Quran Turn's hooks when it asks. Codex never runs untrusted plugin hooks.
+Check `codex plugin list` for `quran-turn@quran-turn` with status **installed, enabled**. Then open an interactive Codex CLI session, run `/hooks`, review Quran Turn's four hook commands, and trust them. Start a new Codex turn after that. If you use the desktop app, restart it after installation or an update. Installing or enabling a plugin does **not** trust its hooks, and Codex skips untrusted hooks even when the plugin appears installed. Do not use `--dangerously-bypass-hook-trust` as an installation step.
+
+If the reader does not open, check `/hooks` first. You can also run `node bin/quran-turn open` from a source clone to check the reader independently of Codex hooks.
 
 ### From source
 
@@ -138,16 +140,24 @@ Update the Quran Turn plugin: run `claude plugin marketplace update quran-turn` 
 Or paste this into Codex:
 
 ```text
-Update the Quran Turn plugin: run `codex plugin marketplace upgrade quran-turn` and then `codex plugin add quran-turn@quran-turn`. When both succeed, tell me to restart Codex.
+Update Quran Turn for Codex. Run `codex plugin marketplace upgrade quran-turn`, then `codex plugin add quran-turn@quran-turn`, and check `codex plugin list` for the installed version. Tell me to restart the Codex app if I use it, and to review `/hooks` in an interactive Codex CLI session if the hook definitions need trust again.
 ```
 
-**3. Or run the commands yourself** (the same ones as above).
+**3. Or run the commands yourself** (the same ones as above). For Codex:
 
-**That's all.** On your next prompt, the reader swaps itself to the new version and an open reader window reloads on its own. You don't need to stop anything. Your place and reading log in `~/.quran-turn` are never touched by an update.
+```bash
+codex plugin marketplace upgrade quran-turn
+codex plugin add quran-turn@quran-turn
+codex plugin list
+```
+
+Restart the Codex app if you use it. In an interactive Codex CLI session, run `/hooks` and review any Quran Turn hooks marked as new or changed; hook trust is tied to the current definition.
+
+Once the updated plugin is loaded and its hooks are trusted, the next prompt swaps the reader server to the new version and an open reader window reloads on its own. Your place and reading log in `~/.quran-turn` are never touched by an update.
 
 > Coming from **v0.4.0 or earlier**? Refresh or close the reader window once after updating, because the self-reload arrived in v0.4.1. From then on it's automatic.
 
-**Which version am I on?** It's in the reader's footer ("visit quran.allrize.tech for updates · v0.5.0"). Click it and the site tells you whether a newer version exists.
+**Which version am I on?** It's in the reader's footer ("visit quran.allrize.tech for updates · v0.5.1"). Click it and the site tells you whether a newer version exists.
 
 ## Using the reader
 

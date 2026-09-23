@@ -74,15 +74,16 @@
         <article class="install-card" id="codex">
           <header class="install-head"><svg class="logo logo-openai" viewBox="0 0 24 24" width="20" height="20" role="img" aria-label="OpenAI"><path fill="currentColor" d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.872zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z"/></svg><span>Codex</span></header>
           <p class="prompt-label">Paste this into Codex (CLI or the Codex app):</p>
-          <blockquote class="prompt">Install the Quran Turn plugin for me. In the terminal, run <code>codex plugin marketplace add rzrizaldy/quran-turn</code> and then <code>codex plugin add quran-turn@quran-turn</code>. When both succeed, tell me to restart Codex and approve Quran Turn&#x27;s hooks when it asks.</blockquote>
-          <button type="button" class="btn-copy-prompt" data-copy="Install the Quran Turn plugin for me. In the terminal, run `codex plugin marketplace add rzrizaldy/quran-turn` and then `codex plugin add quran-turn@quran-turn`. When both succeed, tell me to restart Codex and approve Quran Turn&#x27;s hooks when it asks.">Copy prompt for Codex</button>
+          <blockquote class="prompt">Install Quran Turn for Codex. Run <code>codex plugin marketplace add rzrizaldy/quran-turn</code>, then <code>codex plugin add quran-turn@quran-turn</code>, and check <code>codex plugin list</code> for an enabled Quran Turn. Tell me to open an interactive Codex CLI session, run <code>/hooks</code>, review and trust Quran Turn&#x27;s four hooks, then start a new turn. Do not bypass hook trust.</blockquote>
+          <button type="button" class="btn-copy-prompt" data-copy="Install Quran Turn for Codex. Run `codex plugin marketplace add rzrizaldy/quran-turn`, then `codex plugin add quran-turn@quran-turn`, and check `codex plugin list` for an enabled Quran Turn. Tell me to open an interactive Codex CLI session, run `/hooks`, review and trust Quran Turn&#x27;s four hooks, then start a new turn. Do not bypass hook trust.">Copy prompt for Codex</button>
           <details class="manual">
             <summary>Or run the commands yourself</summary>
             <ol class="cmd-list">
               <li><code>codex plugin marketplace add rzrizaldy/quran-turn</code><button type="button" class="copy copy-sm" data-copy="codex plugin marketplace add rzrizaldy/quran-turn" aria-label="Copy: codex plugin marketplace add rzrizaldy/quran-turn">Copy</button></li>
               <li><code>codex plugin add quran-turn@quran-turn</code><button type="button" class="copy copy-sm" data-copy="codex plugin add quran-turn@quran-turn" aria-label="Copy: codex plugin add quran-turn@quran-turn">Copy</button></li>
+              <li><code>codex plugin list</code><button type="button" class="copy copy-sm" data-copy="codex plugin list" aria-label="Copy: codex plugin list">Copy</button></li>
             </ol>
-            <p class="install-note">Run each line in your terminal, then start <code>codex</code> and approve Quran Turn’s hooks once.</p>
+            <p class="install-note">Then start interactive <code>codex</code>, run <code>/hooks</code>, and review and trust Quran Turn’s four hooks. Restart the desktop app if you use it. Installed and enabled alone is not enough: Codex skips untrusted hooks.</p>
           </details>
         </article>
       </div>
@@ -119,16 +120,23 @@
             <li>Choose <strong>Enable auto-update</strong></li>
           </ol>
           <p class="install-note">New versions then download in the background. Run <code>/reload-plugins</code> when Claude Code tells you, or they load next launch.</p>
-        </article>
-        <article class="update-card">
-          <span class="step-k"><i style="background: var(--brass);"></i>OR ASK YOUR AGENT</span>
-          <h3>Paste one prompt</h3>
+          <p class="install-note">Or ask Claude Code to update it manually:</p>
           <blockquote class="prompt">Update the Quran Turn plugin: run <code>claude plugin marketplace update quran-turn</code> and then <code>claude plugin update quran-turn@quran-turn</code>. When it says it updated, tell me to run /reload-plugins.</blockquote>
           <button type="button" class="btn-copy-prompt" data-copy="Update the Quran Turn plugin: run `claude plugin marketplace update quran-turn` and then `claude plugin update quran-turn@quran-turn`. When it says it updated, tell me to run /reload-plugins.">Copy update prompt for Claude Code</button>
-          <button type="button" class="btn-copy-prompt btn-copy-secondary" data-copy="Update the Quran Turn plugin: run `codex plugin marketplace upgrade quran-turn` and then `codex plugin add quran-turn@quran-turn`. When both succeed, tell me to restart Codex.">Copy update prompt for Codex</button>
+        </article>
+        <article class="update-card">
+          <span class="step-k"><i style="background: var(--teal);"></i>CODEX · MANUAL UPDATE</span>
+          <h3>Refresh and check the plugin</h3>
+          <ol class="update-steps">
+            <li><code>codex plugin marketplace upgrade quran-turn</code></li>
+            <li><code>codex plugin add quran-turn@quran-turn</code></li>
+            <li><code>codex plugin list</code> — check the installed version</li>
+            <li>Restart the Codex app if you use it. Run <code>/hooks</code> in interactive Codex CLI and review any new or changed Quran Turn hooks.</li>
+          </ol>
+          <button type="button" class="btn-copy-prompt" data-copy="Update Quran Turn for Codex. Run `codex plugin marketplace upgrade quran-turn`, then `codex plugin add quran-turn@quran-turn`, and check `codex plugin list` for the installed version. Tell me to restart the Codex app if I use it, and to review `/hooks` in an interactive Codex CLI session if the hook definitions need trust again.">Copy update prompt for Codex</button>
         </article>
       </div>
-      <p class="update-after"><strong>That’s all.</strong> On your next prompt, the reader swaps itself to the new version and an open reader window reloads on its own. Your place and reading log are never touched. Coming from v0.4.0 or earlier? Refresh the reader window once.</p>
+      <p class="update-after">After the updated plugin loads and its hooks are trusted, the next prompt swaps the reader server to the new version and an open reader window reloads. Your place and reading log are never touched. Coming from v0.4.0 or earlier? Refresh the reader window once.</p>
     </div>
   </section>
 
