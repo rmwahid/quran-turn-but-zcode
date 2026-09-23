@@ -18,8 +18,9 @@ Quran Turn is a local Qur'an reader plugin for Claude Code and Codex, with a Clo
 - `npm test`: 32 passed. `npm run verify`: all Tanzil checksum, count, and basmala checks passed. `claude plugin validate .`, JavaScript syntax checks, HTML parse, and `git diff --check` passed.
 - GitHub Actions run `35873089055` completed successfully, including tests and release. `codex plugin marketplace upgrade quran-turn` followed by `codex plugin add quran-turn@quran-turn` installed v0.5.1 and `codex plugin list` showed it enabled.
 - The production custom domain served the new install/update copy. `/api/changelog` served v0.5.1; the live browser showed `Latest v0.5.1` after it loaded. The update section was visually inspected locally and on production.
+- In Codex CLI, the four Quran Turn v0.5.1 hooks were individually reviewed and trusted: `UserPromptSubmit`, `PermissionRequest`, `PostToolUse`, and `Stop`. An unrelated Vercel hook was left untrusted. A normal Codex CLI turn without a trust bypass completed, added one reading-session record with `agent: codex`, left the state at `done`, and started reader server v0.5.1 with a connected reader window.
 
 ## Constraints and next actions
 
-- Codex hook trust is a user decision tied to the hook definition. In an interactive Codex CLI session, run `/hooks`, review and trust Quran Turn's four hook commands, and start a new turn. Restart the desktop app to load v0.5.1. A real desktop turn after trust remains to be verified.
+- Hook trust is tied to the installed definition, so a future changed hook may require another `/hooks` review. The Codex CLI path is verified; a fresh desktop-app turn after restarting the app remains to be verified.
 - The pre-existing untracked `.claude/` directory was intentionally left untouched.
