@@ -38,6 +38,7 @@
     "data",
     "hooks",
     ".claude-plugin",
-    ".codex-plugin"
+    ".codex-plugin",
+    "scripts"
   ]
 }
