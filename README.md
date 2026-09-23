@@ -19,14 +19,33 @@ Quran Turn is a plugin for **Claude Code** and **Codex**. When you send your age
 
 Requires **Node.js 18+**. There's nothing to `npm install`, because Quran Turn has zero dependencies.
 
-### Claude Code
+### Easiest: ask your agent
+
+Paste this into **Claude Code** (terminal, or the Code tab in the Claude desktop app):
+
+```text
+Install the Quran Turn plugin for me. In the terminal, run `claude plugin marketplace add rzrizaldy/quran-turn` and then `claude plugin install quran-turn@quran-turn`. When both succeed, tell me to restart Claude Code. If the `claude` command isn't available, tell me to type `/plugin marketplace add rzrizaldy/quran-turn` and then `/plugin install quran-turn@quran-turn` myself, one line at a time.
+```
+
+Paste this into **Codex** (CLI or the Codex app):
+
+```text
+Install the Quran Turn plugin for me. In the terminal, run `codex plugin marketplace add rzrizaldy/quran-turn` and then `codex plugin add quran-turn@quran-turn`. When both succeed, tell me to restart Codex and approve Quran Turn's hooks when it asks.
+```
+
+### Or run the commands yourself
+
+**Claude Code:** type each line on its own (`/plugin` accepts one command at a time):
 
 ```
 /plugin marketplace add rzrizaldy/quran-turn
+```
+
+```
 /plugin install quran-turn@quran-turn
 ```
 
-### Codex
+**Codex:** in your terminal:
 
 ```bash
 codex plugin marketplace add rzrizaldy/quran-turn
@@ -36,7 +55,7 @@ codex plugin marketplace add rzrizaldy/quran-turn
 codex plugin add quran-turn@quran-turn
 ```
 
-Then start `codex` normally. The first time, Codex asks you to review and **trust** Quran Turn's hooks. Approve them, or nothing will happen (Codex never runs untrusted plugin hooks).
+Then start `codex` and approve Quran Turn's hooks when it asks. Codex never runs untrusted plugin hooks.
 
 ### From source
 

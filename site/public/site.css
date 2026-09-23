@@ -204,3 +204,28 @@ button.btn { border: none; font-family: inherit; cursor: pointer; }
 .install-note { margin: 0; font-size: 13px; line-height: 1.5; color: var(--muted); }
 .install-note code { font-family: var(--mono); font-size: 12px; }
 .install-req { margin: 16px 0 0; font-size: 13px; font-weight: 600; color: var(--muted); }
+
+/* Prompt-first install */
+.prompt-label { margin: 0; font-size: 13px; font-weight: 600; color: var(--muted); }
+.prompt {
+  margin: 0; padding: 14px 16px; border-radius: 12px; background: var(--page); border: 1px solid var(--soft);
+  font-size: 14px; line-height: 1.6; color: var(--ink);
+}
+.btn-copy-prompt {
+  height: 46px; border: none; border-radius: 12px; background: var(--ink); color: var(--page);
+  font: 700 14px var(--sans); cursor: pointer;
+}
+.btn-copy-prompt:hover { filter: brightness(1.1); }
+.btn-copy-prompt:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+.manual summary { cursor: pointer; font-size: 13px; font-weight: 600; color: var(--muted); }
+.manual summary:hover { color: var(--ink); }
+.manual[open] summary { margin-bottom: 10px; }
+.cmd-list { margin: 0 0 10px; padding: 0; list-style: none; display: grid; gap: 8px; }
+.cmd-list li {
+  display: flex; align-items: center; gap: 10px; min-width: 0; padding: 8px 8px 8px 14px; border-radius: 10px;
+  background: var(--code-bg);
+}
+.cmd-list code { flex: 1; min-width: 0; overflow-x: auto; white-space: nowrap; font-family: var(--mono); font-size: 12.5px; color: var(--code); }
+.copy-sm { height: 28px; padding: 0 10px; background: rgba(255, 255, 255, 0.08); border-color: rgba(201, 220, 216, 0.25); color: var(--code); }
+.copy-sm:hover { background: rgba(255, 255, 255, 0.14); }
+.prompt code { font-family: var(--mono); font-size: 12px; padding: 1px 6px; border-radius: 6px; background: rgba(45, 117, 98, 0.1); white-space: nowrap; }
