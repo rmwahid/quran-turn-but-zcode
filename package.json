@@ -1,0 +1,43 @@
+{
+  "name": "quran-turn",
+  "version": "0.1.0",
+  "description": "Read the Qur'an while your coding agent takes its turn. Local-first, offline, no account.",
+  "license": "MIT",
+  "author": "Rizaldy",
+  "homepage": "https://quran-turn.org",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rzrizaldy/quran-turn.git"
+  },
+  "bugs": "https://github.com/rzrizaldy/quran-turn/issues",
+  "keywords": [
+    "quran",
+    "claude-code",
+    "codex",
+    "hooks",
+    "offline",
+    "plugin"
+  ],
+  "type": "module",
+  "bin": {
+    "quran-turn": "bin/quran-turn"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "verify": "node scripts/verify-quran.mjs",
+    "verify:remote": "node scripts/verify-quran.mjs --remote",
+    "test": "node --test",
+    "start": "node bin/quran-turn serve"
+  },
+  "files": [
+    "bin",
+    "src",
+    "app",
+    "data",
+    "hooks",
+    ".claude-plugin",
+    ".codex-plugin"
+  ]
+}

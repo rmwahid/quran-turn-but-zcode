@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Quran Turn</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="reader.css">
+<script src="/data/quran-data.js"></script>
+<script type="module" src="reader.js"></script>
+</head>
+<body>
+<main class="frame">
+  <header class="bar">
+    <span class="wordmark">QURAN TURN</span>
+    <div class="status" id="status" data-status="idle" aria-live="polite">
+      <span class="dot" aria-hidden="true"></span><span id="status-text">Idle</span>
+    </div>
+  </header>
+
+  <div class="banner" id="banner" hidden>
+    <span class="banner-title" id="banner-title"></span>
+    <span class="banner-meta" id="banner-meta"></span>
+  </div>
+
+  <section class="stage" id="stage">
+    <div class="stage-inner">
+      <div class="surah">
+        <div class="surah-ar" id="surah-ar" lang="ar" dir="rtl"></div>
+        <div class="surah-ref" id="surah-ref"></div>
+      </div>
+      <div class="rule" aria-hidden="true">
+        <span></span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="5" y="5" width="14" height="14"/><rect x="5" y="5" width="14" height="14" transform="rotate(45 12 12)"/></svg>
+        <span></span>
+      </div>
+      <div class="ayah" lang="ar" dir="rtl">
+        <p class="ayah-text" id="ayah-text"></p>
+        <span class="ayah-end" id="ayah-end" aria-hidden="true"></span>
+      </div>
+      <p class="error" id="error" hidden></p>
+    </div>
+  </section>
+
+  <nav class="nav" aria-label="Ayah navigation">
+    <button type="button" id="next" class="btn btn-primary" title="Next ayah (← or j)">← Next</button>
+    <button type="button" id="prev" class="btn" title="Previous ayah (→ or k)">Previous →</button>
+  </nav>
+
+  <footer class="foot">
+    <button type="button" class="foot-link" id="open-jump" title="Go to surah or ayah (g)"><span id="counter">—</span></button>
+    <span class="verified" id="verified" hidden title="Text matches the pinned SHA-256 of Tanzil Uthmani">Tanzil ✓</span>
+    <a class="support" id="support" target="_blank" rel="noopener noreferrer">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>Support
+    </a>
+  </footer>
+
+  <div class="sheet" id="jump" hidden role="dialog" aria-modal="true" aria-label="Go to surah or ayah">
+    <header class="bar">
+      <span class="wordmark">GO TO</span>
+      <button type="button" class="btn btn-small" id="close-jump">Close</button>
+    </header>
+    <form class="jump-fields" id="jump-form">
+      <label class="field grow"><span>Surah</span><input id="jump-search" type="search" placeholder="Search name or number" autocomplete="off"></label>
+      <label class="field ref"><span>Ayah</span><input id="jump-ref" type="text" placeholder="2:255" inputmode="numeric" autocomplete="off"></label>
+    </form>
+    <ul class="surah-list" id="surah-list"></ul>
+    <footer class="foot"><span>114 surahs · 6236 ayat</span><span>esc to close</span></footer>
+  </div>
+</main>
+<noscript>Quran Turn needs JavaScript to display the text.</noscript>
+</body>
+</html>

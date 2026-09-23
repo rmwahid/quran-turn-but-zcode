@@ -1,0 +1,16 @@
+{
+  "name": "quran-turn",
+  "owner": {
+    "name": "Rizaldy"
+  },
+  "metadata": {
+    "description": "Quran Turn: read the Qur’an while your coding agent takes its turn."
+  },
+  "plugins": [
+    {
+      "name": "quran-turn",
+      "source": "./",
+      "description": "Read the Qur'an while your agent takes its turn. Local-first, offline, no account."
+    }
+  ]
+}

@@ -1,0 +1,172 @@
+#!/usr/bin/env node
+// quran-turn — read the Qur'an while your coding agent takes its turn.
+import { spawn } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import { formatRef, loadMeta } from '../src/quran.mjs';
+import { DEFAULT_PORT, startServer } from '../src/server.mjs';
+import { applyHook, home, logError, readJson, readSessions, writeJson } from '../src/state.mjs';
+
+const [cmd, ...rest] = process.argv.slice(2);
+const flag = (name) => {
+  const i = rest.indexOf(`--${name}`);
+  return i >= 0 ? rest[i + 1] : undefined;
+};
+const port = Number(flag('port')) || DEFAULT_PORT;
+const base = `http://127.0.0.1:${port}`;
+
+async function call(path, body, timeout = 600) {
+  const res = await fetch(base + path, {
+    method: body ? 'POST' : 'GET',
+    headers: body ? { 'content-type': 'application/json' } : {},
+    body: body ? JSON.stringify(body) : undefined,
+    signal: AbortSignal.timeout(timeout),
+  });
+  if (!res.ok) throw new Error(`${path}: HTTP ${res.status}`);
+  return res.json();
+}
+
+async function ensureServer() {
+  try {
+    const h = await call('/api/health');
+    if (h.app === 'quran-turn') return true;
+  } catch {}
+  if (process.env.QURAN_TURN_NO_SERVER) return false;
+  const bin = fileURLToPath(import.meta.url);
+  spawn(process.execPath, [bin, 'serve', '--port', String(port)], { detached: true, stdio: 'ignore' }).unref();
+  for (let i = 0; i < 20; i++) {
+    await new Promise((r) => setTimeout(r, 100));
+    try {
+      if ((await call('/api/health', null, 300)).app === 'quran-turn') return true;
+    } catch {}
+  }
+  return false;
+}
+
+// Hook payloads arrive as JSON on stdin. Never wait long for it.
+function readStdin(ms = 300) {
+  if (process.stdin.isTTY) return Promise.resolve({});
+  return new Promise((resolve) => {
+    let raw = '';
+    const done = () => {
+      try {
+        resolve(raw.trim() ? JSON.parse(raw) : {});
+      } catch {
+        resolve({});
+      }
+    };
+    const t = setTimeout(() => {
+      process.stdin.pause();
+      done();
+    }, ms);
+    process.stdin.setEncoding('utf8');
+    process.stdin.on('data', (c) => (raw += c));
+    process.stdin.on('end', () => {
+      clearTimeout(t);
+      done();
+    });
+    process.stdin.on('error', () => {
+      clearTimeout(t);
+      done();
+    });
+  });
+}
+
+// Hooks must be invisible: no stdout (Claude/Codex would read it as context),
+// always exit 0, and fall back to writing files if the server is unreachable.
+async function hook(event) {
+  const EVENTS = { start: 'start', 'needs-you': 'needs-you', resume: 'resume', stop: 'stop' };
+  if (!EVENTS[event]) return;
+  // Fast exit when the event can't change anything (PostToolUse fires on every tool call).
+  const { status } = readJson('agent.json');
+  if (event === 'resume' && status !== 'needs_you') return;
+  if (event === 'needs-you' && status !== 'working') return;
+  if (event === 'stop' && status !== 'working' && status !== 'needs_you') return;
+  const payload = await readStdin();
+  const agent = flag('agent') || (process.env.PLUGIN_ROOT ? 'codex' : 'claude');
+  const body = { event, agent, session_id: payload.session_id ?? null };
+  if (!readJson('config.json').enabled) return;
+  try {
+    await call('/api/hook', body);
+    return;
+  } catch {}
+  if (event === 'start' && (await ensureServer())) {
+    try {
+      await call('/api/hook', body, 1500);
+      return;
+    } catch {}
+  }
+  applyHook(event, body);
+}
+
+function statusLine() {
+  const meta = loadMeta();
+  const pos = readJson('state.json');
+  const { status } = readJson('agent.json');
+  const word = status === 'working' ? 'reading' : status === 'needs_you' ? 'paused' : 'idle';
+  return `☾ quran-turn · ${formatRef(meta, pos.surah, pos.ayah)} · ${word}`;
+}
+
+const HELP = `quran-turn — read the Qur'an while your coding agent takes its turn
+
+  quran-turn open           open the reader window
+  quran-turn where          your current position
+  quran-turn log [n]        the last n turns (default 10)
+  quran-turn status         one-line status (for a terminal status line)
+  quran-turn on | off       enable or pause the hooks
+  quran-turn serve          run the local reader server (hooks start it for you)
+  quran-turn hook <event>   called by agent hooks: start | needs-you | resume | stop
+
+State lives in ${home()} as plain JSON.`;
+
+try {
+  switch (cmd) {
+    case 'hook':
+      await hook(rest[0]);
+      process.exit(0); // don't linger on keep-alive sockets or stdin
+      break;
+    case 'serve': {
+      const { url } = await startServer({ port });
+      console.error(`quran-turn reader at ${url}`);
+      break;
+    }
+    case 'open': {
+      if (!(await ensureServer())) throw new Error('could not start the reader server');
+      const r = await call('/api/open', {});
+      console.log(r.opened ? `Opened ${base}/` : `Reader already open (${base}/)`);
+      break;
+    }
+    case 'where': {
+      const meta = loadMeta();
+      const p = readJson('state.json');
+      console.log(`${formatRef(meta, p.surah, p.ayah)}  ${meta.Sura[p.surah][4]}`);
+      break;
+    }
+    case 'status':
+      console.log(statusLine());
+      break;
+    case 'log': {
+      const n = Number(rest[0]) || 10;
+      const turns = readSessions().slice(-n);
+      if (!turns.length) console.log('No turns yet.');
+      for (const t of turns) {
+        const when = new Date(t.started_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+        console.log(`${when}  ${t.from} → ${t.to}  ${t.ayat} ayat  ${t.agent}${t.interrupted ? '  (interrupted)' : ''}`);
+      }
+      break;
+    }
+    case 'on':
+    case 'off':
+      writeJson('config.json', { ...readJson('config.json'), enabled: cmd === 'on' });
+      console.log(cmd === 'on' ? 'quran-turn hooks enabled.' : 'quran-turn hooks paused. Run `quran-turn on` to resume.');
+      break;
+    default:
+      console.log(HELP);
+  }
+} catch (err) {
+  if (cmd === 'hook') {
+    logError(err);
+    process.exit(0);
+  }
+  console.error(`quran-turn: ${err.message}`);
+  process.exit(1);
+}

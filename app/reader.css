@@ -1,0 +1,147 @@
+/* Quran Turn reader. Palette follows gelitik.allrize.tech. All fonts are local. */
+@font-face { font-family: "Amiri Quran"; src: url("fonts/AmiriQuran.woff2") format("woff2"); font-display: block; }
+@font-face { font-family: "Manrope"; src: url("fonts/Manrope.woff2") format("woff2"); font-weight: 200 800; font-display: swap; }
+@font-face { font-family: "DM Mono"; src: url("fonts/DMMono-Regular.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+
+:root {
+  --page: #fff8e8; --card: #fffdf4; --ink: #173b39; --muted: #53716c;
+  --line: rgba(45, 117, 98, 0.3); --soft: rgba(45, 117, 98, 0.16);
+  --teal: #239c84; --marker: #1f7f6b; --brass: #c97520; --support: #8f4f0e;
+  --btn: #fff8e8; --hover: rgba(176, 232, 206, 0.35);
+  --needs-bg: #f8e6c8; --needs-line: rgba(201, 117, 32, 0.35); --needs-ink: #6b3a08;
+  --done-bg: rgba(176, 232, 206, 0.35); --done-line: rgba(45, 117, 98, 0.2); --done-ink: #173b39;
+  --ayah-size: 30px;
+  --mono: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --sans: "Manrope", system-ui, -apple-system, sans-serif;
+  --quran: "Amiri Quran", serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page: #0c2321; --card: #12302d; --ink: #fff8e8; --muted: #a6c2bc;
+    --line: rgba(176, 232, 206, 0.22); --soft: rgba(176, 232, 206, 0.12);
+    --teal: #4ee1d2; --marker: #f2bd51; --support: #f2bd51; --btn: #16433e; --hover: rgba(176, 232, 206, 0.1);
+    --needs-bg: rgba(201, 117, 32, 0.22); --needs-line: rgba(242, 189, 81, 0.35); --needs-ink: #f7d9a4;
+    --done-bg: rgba(78, 225, 210, 0.12); --done-line: rgba(78, 225, 210, 0.25); --done-ink: #d8f5ec;
+  }
+}
+:root[data-theme="dark"] {
+  --page: #0c2321; --card: #12302d; --ink: #fff8e8; --muted: #a6c2bc;
+  --line: rgba(176, 232, 206, 0.22); --soft: rgba(176, 232, 206, 0.12);
+  --teal: #4ee1d2; --marker: #f2bd51; --support: #f2bd51; --btn: #16433e; --hover: rgba(176, 232, 206, 0.1);
+  --needs-bg: rgba(201, 117, 32, 0.22); --needs-line: rgba(242, 189, 81, 0.35); --needs-ink: #f7d9a4;
+  --done-bg: rgba(78, 225, 210, 0.12); --done-line: rgba(78, 225, 210, 0.25); --done-ink: #d8f5ec;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0; padding: 14px; background: var(--page); color: var(--ink);
+  font-family: var(--sans); -webkit-font-smoothing: antialiased;
+}
+button, input { font: inherit; color: inherit; }
+[hidden] { display: none !important; }
+
+.frame {
+  position: relative; height: 100%; max-width: 760px; margin: 0 auto;
+  display: flex; flex-direction: column; overflow: hidden;
+  background: var(--card); border: 1px solid var(--line); border-radius: 20px;
+}
+
+.bar {
+  height: 54px; flex-shrink: 0; padding: 0 22px; display: flex; align-items: center;
+  justify-content: space-between; border-bottom: 1px solid var(--soft);
+}
+.wordmark { font-family: var(--mono); font-size: 11px; letter-spacing: 0.2em; color: var(--muted); }
+
+.status { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; }
+.status .dot { width: 8px; height: 8px; border-radius: 999px; border: 1.5px solid var(--muted); }
+.status[data-status="idle"], .status[data-status="done"] { color: var(--muted); }
+.status[data-status="working"] .dot { border: none; background: var(--teal); animation: pulse 1.8s ease-out infinite; }
+.status[data-status="needs_you"] .dot { border: none; background: var(--brass); }
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--teal) 45%, transparent); }
+  70% { box-shadow: 0 0 0 8px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+@media (prefers-reduced-motion: reduce) { .status .dot { animation: none !important; } }
+
+.banner {
+  flex-shrink: 0; padding: 12px 22px; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  font-size: 13px; font-weight: 700;
+}
+.banner[data-kind="needs_you"] { background: var(--needs-bg); border-bottom: 1px solid var(--needs-line); color: var(--needs-ink); }
+.banner[data-kind="done"] { background: var(--done-bg); border-bottom: 1px solid var(--done-line); color: var(--done-ink); }
+.banner-meta { font-family: var(--mono); font-size: 11px; font-weight: 400; opacity: 0.85; }
+
+/* The stage scrolls for very long ayat (e.g. 2:282) instead of clipping. */
+.stage { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; padding: 26px 30px 18px; }
+.stage-inner { margin: auto 0; display: flex; flex-direction: column; align-items: center; gap: 18px; }
+
+.surah { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.surah-ar { font-family: var(--quran); font-size: 24px; line-height: 1.5; }
+.surah-ref { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; color: var(--muted); }
+
+.rule { display: flex; align-items: center; gap: 10px; width: 120px; color: var(--marker); }
+.rule span { flex-grow: 1; height: 1px; background: var(--line); }
+
+.ayah { text-align: center; font-family: var(--quran); font-size: var(--ayah-size); line-height: 2.05; }
+.ayah-text { display: inline; margin: 0; }
+.basmala { display: block; font-size: 0.78em; color: var(--muted); margin-bottom: 0.2em; }
+.ayah-end { color: var(--marker); white-space: nowrap; margin-inline-start: 0.2em; }
+.error { margin: 0; max-width: 340px; text-align: center; font-size: 14px; line-height: 1.6; color: var(--needs-ink); }
+
+.nav { flex-shrink: 0; padding: 0 22px 16px; display: flex; gap: 10px; }
+.btn {
+  flex: 1; height: 44px; border-radius: 999px; border: 1px solid var(--line);
+  background: transparent; color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.btn-primary { background: var(--btn); color: var(--ink); }
+.btn:hover:not(:disabled) { background: var(--hover); }
+.btn:disabled, .foot-link:disabled { opacity: 0.4; cursor: default; }
+.btn:focus-visible, .foot-link:focus-visible, .support:focus-visible, .surah-list button:focus-visible, input:focus-visible {
+  outline: 2px solid var(--teal); outline-offset: 2px;
+}
+.btn-small { flex: none; height: 32px; padding: 0 12px; font-size: 12px; color: var(--ink); }
+
+.foot {
+  height: 44px; flex-shrink: 0; padding: 0 22px; display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; border-top: 1px solid var(--soft); font-family: var(--mono); font-size: 11px; color: var(--muted);
+}
+.foot-link { background: none; border: none; padding: 0; font: inherit; color: inherit; cursor: pointer; }
+.foot-link:hover { color: var(--ink); }
+.verified { color: var(--marker); }
+.support {
+  display: flex; align-items: center; gap: 6px; font-family: var(--sans); font-size: 12px; font-weight: 600;
+  color: var(--support); text-decoration: none;
+}
+.support:hover { text-decoration: underline; }
+
+/* Go-to sheet */
+.sheet { position: absolute; inset: 0; display: flex; flex-direction: column; background: var(--card); }
+.jump-fields { flex-shrink: 0; padding: 16px 22px 10px; display: flex; gap: 10px; }
+.field { display: flex; flex-direction: column; gap: 6px; font-size: 11px; font-weight: 600; color: var(--muted); }
+.field.grow { flex: 1; }
+.field.ref { width: 116px; }
+.field input {
+  height: 44px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--line);
+  background: var(--page); font-size: 14px; font-weight: 500; color: var(--ink);
+}
+.field.ref input { font-family: var(--mono); }
+.surah-list { flex-grow: 1; overflow-y: auto; margin: 0; padding: 4px 10px 12px; list-style: none; }
+.surah-list button {
+  width: 100%; min-height: 52px; padding: 0 14px; display: flex; align-items: center; gap: 14px;
+  border: none; border-radius: 12px; background: transparent; cursor: pointer; text-align: left;
+}
+.surah-list button:hover, .surah-list button[aria-current="true"] { background: var(--hover); }
+.surah-num { width: 28px; font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.surah-names { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.surah-tr { font-size: 14px; font-weight: 700; color: var(--ink); }
+.surah-en { font-size: 12px; color: var(--muted); }
+.surah-list .surah-ar { font-size: 20px; line-height: 1.4; }
+
+@media (max-width: 420px) {
+  body { padding: 0; }
+  .frame { border-radius: 0; border: none; }
+  .stage { padding: 20px 18px 14px; }
+  .verified { display: none; }
+}

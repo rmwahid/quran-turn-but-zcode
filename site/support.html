@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Support Quran Turn</title>
+<meta name="description" content="Quran Turn is free and stays free. Optional donations help keep it maintained.">
+<link rel="stylesheet" href="site.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="./"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><rect x="5" y="5" width="14" height="14"/><rect x="5" y="5" width="14" height="14" transform="rotate(45 12 12)"/></svg>Quran Turn</a>
+    <nav class="links" aria-label="Site"><a href="./">← Back</a><button type="button" class="nav-donate" id="sedekahOpenBtn" data-sedekah-open>Support 💸</button></nav>
+  </div>
+</header>
+
+<main class="support-main">
+  <div class="panel">
+    <span class="eyebrow">OPTIONAL · ALWAYS</span>
+    <h1>Support Quran Turn</h1>
+    <p>Quran Turn is free and stays free. If it has a place in your day, a donation helps keep it maintained and offline-first.</p>
+    <ul class="promises">
+      <li><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="5" y="5" width="14" height="14"/><rect x="5" y="5" width="14" height="14" transform="rotate(45 12 12)"/></svg>Free forever</li>
+      <li><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="5" y="5" width="14" height="14"/><rect x="5" y="5" width="14" height="14" transform="rotate(45 12 12)"/></svg>No ads</li>
+      <li><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="5" y="5" width="14" height="14"/><rect x="5" y="5" width="14" height="14" transform="rotate(45 12 12)"/></svg>No account, no tracking</li>
+      <li><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="5" y="5" width="14" height="14"/><rect x="5" y="5" width="14" height="14" transform="rotate(45 12 12)"/></svg>No Qur’an behind a paywall</li>
+    </ul>
+    <button type="button" class="btn btn-gold" data-sedekah-open><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>Support via Midtrans</button>
+    <p class="small">Pick an amount, then pay in Midtrans’ own window: QRIS, GoPay, bank transfer or card. Quran Turn never sees your payment details, and the app never asks for money.</p>
+  </div>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <span>Qur’an text: <a href="https://tanzil.net">Tanzil Project</a> (CC BY 3.0) · Code: MIT</span>
+    <a href="https://github.com/rzrizaldy/quran-turn">GitHub</a>
+  </div>
+</footer>
+<div class="sedekah-modal-overlay" id="sedekahModal" hidden aria-hidden="true">
+  <div class="sedekah-modal" role="dialog" aria-labelledby="sedekahModalTitle" aria-modal="true">
+    <button type="button" class="sedekah-modal-close" id="sedekahModalClose" aria-label="Tutup">×</button>
+    <h3 id="sedekahModalTitle">Sedekah untuk Quran Turn 🤲</h3>
+    <p class="sedekah-modal-desc">Dukungan sukarela agar Quran Turn tetap gratis, offline, dan terawat.</p>
+    <div class="sedekah-presets" id="sedekahPresets" role="group" aria-label="Nominal">
+      <button type="button" class="sedekah-preset active" data-amount="5000" aria-pressed="true">5rb</button>
+      <button type="button" class="sedekah-preset" data-amount="10000" aria-pressed="false">10rb</button>
+      <button type="button" class="sedekah-preset" data-amount="25000" aria-pressed="false">25rb</button>
+      <button type="button" class="sedekah-preset" data-amount="50000" aria-pressed="false">50rb</button>
+    </div>
+    <label class="sedekah-custom-label" for="sedekahCustomAmount">Nominal lain</label>
+    <input type="text" id="sedekahCustomAmount" class="sedekah-custom-input" inputmode="numeric" placeholder="Min. 5.000" autocomplete="off">
+    <p class="sedekah-error" id="sedekahError" hidden></p>
+    <button type="button" class="sedekah-submit" id="sedekahSubmitBtn">Lanjutkan</button>
+    <div class="sedekah-modal-alt">
+      <p>Di luar Indonesia? <a href="https://buy.stripe.com/6oUaEYfkugo24pgaPx7ok01" target="_blank" rel="noopener noreferrer">Pay with card (Stripe)</a></p>
+    </div>
+  </div>
+</div>
+<script type="module" src="donate.js"></script>
+</body>
+</html>

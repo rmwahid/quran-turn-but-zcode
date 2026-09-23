@@ -1,0 +1,33 @@
+{
+  "description": "quran-turn: open the Qur'an reader while the agent works, pause it when the agent needs you, save your place when the turn ends. Hooks print nothing and never block.",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/bin/quran-turn\" hook start", "timeout": 10 }
+        ]
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "hooks": [
+          { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/bin/quran-turn\" hook needs-you", "timeout": 5 }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/bin/quran-turn\" hook resume", "timeout": 5 }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/bin/quran-turn\" hook stop", "timeout": 5 }
+        ]
+      }
+    ]
+  }
+}

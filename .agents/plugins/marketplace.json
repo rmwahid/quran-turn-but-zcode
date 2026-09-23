@@ -1,0 +1,12 @@
+{
+  "name": "quran-turn",
+  "interface": { "displayName": "Quran Turn" },
+  "plugins": [
+    {
+      "name": "quran-turn",
+      "source": { "source": "local", "path": "./" },
+      "policy": { "installation": "AVAILABLE" },
+      "category": "Productivity"
+    }
+  ]
+}

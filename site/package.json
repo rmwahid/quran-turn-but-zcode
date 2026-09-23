@@ -1,0 +1,6 @@
+{
+  "name": "quran-turn-site",
+  "private": true,
+  "type": "module",
+  "description": "quran-turn.org: static pages plus two Vercel functions for Midtrans Snap donations"
+}
