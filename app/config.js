@@ -10,5 +10,5 @@ export const SUPPORT_URL = 'https://quran.allrize.tech/#support';
 
 // Shown in the reader's small "visit quran.allrize.tech for updates" line.
 // A test keeps it equal to package.json's version.
-export const VERSION = '0.4.1';
+export const VERSION = '0.5.0';
 export const SITE_URL = 'https://quran.allrize.tech';

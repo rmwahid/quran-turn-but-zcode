@@ -35,16 +35,23 @@ function parse(md) {
   return releases;
 }
 
-function renderTimeline(releases) {
-  const list = $('timeline');
-  list.replaceChildren(...releases.map((r, i) => el('li', { className: 'tl-item' + (i === 0 ? ' latest' : '') },
+const release = (r, i) => el('li', { className: 'tl-item' + (i === 0 ? ' latest' : '') },
     el('div', { className: 'tl-head' },
       el('span', { className: 'tl-version', textContent: `v${r.version}` }),
       i === 0 ? el('span', { className: 'tl-badge', textContent: 'Latest' }) : '',
       el('time', { className: 'tl-date', dateTime: r.date, textContent: new Date(r.date + 'T12:00:00Z').toLocaleDateString('en', { year: 'numeric', month: 'short', day: 'numeric' }) })),
     r.summary ? el('p', { className: 'tl-summary' }, ...inline(r.summary)) : '',
     el('ul', { className: 'tl-list' }, ...r.items.map((t) => el('li', {}, ...inline(t)))),
-  )));
+  );
+
+// The latest release stays in view; older ones fold under "Earlier releases".
+function renderTimeline(releases) {
+  $('timeline').replaceChildren(release(releases[0], 0));
+  const older = releases.slice(1);
+  if (!older.length) return;
+  $('timeline-older').replaceChildren(...older.map((r, i) => release(r, i + 1)));
+  $('older-label').textContent = `Earlier releases (${older.length})`;
+  $('older').hidden = false;
 }
 
 function renderStatus(releases) {
@@ -57,6 +64,7 @@ function renderStatus(releases) {
     const behind = releases.filter((r) => cmp(r.version, mine) > 0);
     if (behind.length) {
       box.dataset.state = 'behind';
+      $('update').open = true;
       box.replaceChildren(
         el('strong', { textContent: `You're on v${mine} · v${latest} is out` }),
         el('span', { textContent: ` · ${behind.length} update${behind.length === 1 ? '' : 's'} since yours. Pick any route below; the reader swaps itself over on your next prompt.` }));
@@ -65,8 +73,11 @@ function renderStatus(releases) {
       box.replaceChildren(el('strong', { textContent: `You're up to date · v${mine}` }), el('span', { textContent: ' · nothing to do.' }));
     }
   } else {
-    box.dataset.state = 'info';
-    box.replaceChildren(el('strong', { textContent: `Latest version: v${latest}` }));
+    // No version to compare: a quiet "Latest" pill on the folded Update header.
+    box.hidden = true;
+    const pill = $('update-ver');
+    pill.textContent = `Latest v${latest}`;
+    pill.hidden = false;
   }
 }
 
@@ -84,5 +95,13 @@ async function init() {
       el('a', { href: 'https://github.com/rzrizaldy/quran-turn/blob/main/CHANGELOG.md', textContent: 'Read it on GitHub →' })));
   }
 }
+
+// The Update section is folded; the nav link, the reader's "#update" link and
+// a direct visit open it.
+function openFromHash() {
+  if (location.hash === '#update') $('update').open = true;
+}
+addEventListener('hashchange', openFromHash);
+openFromHash();
 
 init();

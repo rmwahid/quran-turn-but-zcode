@@ -147,7 +147,7 @@ Update the Quran Turn plugin: run `codex plugin marketplace upgrade quran-turn` 
 
 > Coming from **v0.4.0 or earlier**? Refresh or close the reader window once after updating, because the self-reload arrived in v0.4.1. From then on it's automatic.
 
-**Which version am I on?** It's in the reader's footer ("visit quran.allrize.tech for updates · v0.4.1"). Click it and the site tells you whether a newer version exists.
+**Which version am I on?** It's in the reader's footer ("visit quran.allrize.tech for updates · v0.5.0"). Click it and the site tells you whether a newer version exists.
 
 ## Using the reader
 
@@ -173,6 +173,16 @@ quran-turn switch on | off   shrink the reader when the agent needs you (macOS)
 ```
 
 (From a clone, run these as `node bin/quran-turn …`.)
+
+## Away from your desk: Ngaji Companion for Muse
+
+[quran.allrize.tech/agent](https://quran.allrize.tech/agent) has a prompt for a [Muse](https://muse.ai) scheduled task. At each of the five prayer times it sends you 5 verses (25 a day) with buttons to mark them read, skip, read more, or mark how far you got. It remembers where you stopped. No account, no API keys, nothing to install.
+
+1. Create a scheduled task in Muse that runs every 15 minutes.
+2. Paste the prompt from the page.
+3. Answer the onboarding question (where to start).
+
+It runs inside Muse, not this plugin: prayer times come from the public Aladhan API and verses from api.alquran.cloud's `quran-uthmani` edition, which is the older Tanzil build described under [Text accuracy](#text-accuracy). Quran Turn is not affiliated with Muse.
 
 ## Your data stays yours
 

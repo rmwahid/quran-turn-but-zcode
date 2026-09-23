@@ -282,3 +282,30 @@ button.btn { border: none; font-family: inherit; cursor: pointer; }
   white-space: pre-wrap; overflow-wrap: anywhere;
 }
 .agent-code:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+
+/* ── Folded sections (Update, earlier releases) ───────────────────────────── */
+.fold > summary { list-style: none; cursor: pointer; }
+.fold > summary::-webkit-details-marker { display: none; }
+.fold-chev { flex-shrink: 0; color: var(--muted); transition: transform 0.2s ease; }
+.fold[open] .fold-chev { transform: rotate(180deg); }
+.fold-hint { font-size: 14px; color: var(--muted); }
+#update > summary {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 6px 16px;
+  padding: 18px 20px; border: 1px solid var(--line); border-radius: 18px; background: var(--card);
+  transition: border-color 0.2s ease;
+}
+#update > summary:hover { border-color: var(--teal); }
+#update > summary:focus-visible, .fold-older > summary:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+.updates #update h2 { margin: 0; }
+.fold-ver { font-family: var(--mono); font-size: 11px; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+@media (max-width: 640px) {
+  #update > summary { grid-template-columns: auto minmax(0, 1fr) auto; }
+  #update > summary .fold-hint { grid-column: 1 / span 2; grid-row: 2; }
+  #update > summary .fold-ver { justify-self: start; }
+  #update > summary .fold-chev { grid-column: 3; grid-row: 1 / span 2; }
+}
+.fold-body { padding-top: 16px; }
+.fold-older { margin-top: 22px; }
+.fold-older > summary { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+.fold-older > summary:hover .fold-hint { color: var(--ink); }
+.fold-older .timeline { margin-top: 18px; }

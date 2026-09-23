@@ -2,6 +2,14 @@
 
 Every release of Quran Turn. The newest is on top. GitHub release notes and the timeline on [quran.allrize.tech](https://quran.allrize.tech/#changelog) are generated from this file.
 
+## [0.5.0] - 2026-09-23
+
+Ngaji Companion for Muse, and a tidier site.
+
+- **Ngaji Companion for Muse:** a prompt you paste into a Muse scheduled task, at [quran.allrize.tech/agent](https://quran.allrize.tech/agent). It sends 5 verses at each prayer time, 25 a day, with read, skip and continue buttons. Copy it, or share it straight to Muse from your phone.
+- **Tidier landing page.** The Update guide folds away and opens by itself when you arrive from the reader's update link or your version is behind. Older releases fold under "Earlier releases".
+- The reader and hooks are unchanged. Updating is safe and keeps your place.
+
 ## [0.4.1] - 2026-09-23
 
 Updating is now seamless.
