@@ -70,6 +70,7 @@ describe('Qur’an text', () => {
     const pkg = v('package.json');
     assert.equal(v('.claude-plugin/plugin.json'), pkg);
     assert.equal(v('.codex-plugin/plugin.json'), pkg);
+    assert.match(readFileSync(join(ROOT, 'app/config.js'), 'utf8'), new RegExp(`VERSION = '${pkg.replaceAll('.', '\\.')}'`));
   });
 
   test('parser rejects tampering', () => {

@@ -1,6 +1,6 @@
 // Quran Turn reader. Ayah strings only ever reach the page through textContent
 // and are never altered; the file is checked against its pinned SHA-256 first.
-import { QURAN_SHA256, SUPPORT_URL } from './config.js';
+import { QURAN_SHA256, SITE_URL, SUPPORT_URL, VERSION } from './config.js';
 import { arabicDigits, parseTanzil, sha256Hex, splitBasmala } from './quran-core.js';
 
 const $ = (id) => document.getElementById(id);
@@ -280,6 +280,8 @@ async function init() {
   if (size) setSize(size);
 
   $('support').href = SUPPORT_URL;
+  $('site-note').href = SITE_URL;
+  $('version').textContent = ` · v${VERSION}`;
   $('next').addEventListener('click', () => step(1));
   $('prev').addEventListener('click', () => step(-1));
   $('open-jump').addEventListener('click', openJump);
