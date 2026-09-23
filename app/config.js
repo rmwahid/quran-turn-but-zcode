@@ -6,4 +6,4 @@ export const QURAN_SHA256 = '6933e133dd56db778c801bf738848454e43648105a151e8d84d
 
 // Opened only when the user clicks "Support": the site's "Support" modal, which
 // pays through Midtrans Snap. The app itself never talks to Midtrans.
-export const SUPPORT_URL = 'https://quran-turn.org/#support';
+export const SUPPORT_URL = 'https://quran.allrize.tech/#support';

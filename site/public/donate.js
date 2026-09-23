@@ -123,7 +123,7 @@ function init() {
     const qs = params.toString();
     history.replaceState({}, '', `${location.pathname}${qs ? `?${qs}` : ''}${location.hash}`);
   }
-  // quran-turn.org/support and the app's Support link open the modal directly.
+  // quran.allrize.tech/support and the app's Support link open the modal directly.
   if (location.hash === '#support' || document.body.dataset.openSedekah === 'true') openModal();
 }
 

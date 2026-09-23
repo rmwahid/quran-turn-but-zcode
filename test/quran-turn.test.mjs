@@ -46,8 +46,8 @@ describe('Qur’an text', () => {
   test('every ayah and surah name embedded in site/ matches Tanzil exactly', () => {
     const { verses } = loadQuran();
     let checked = 0;
-    for (const f of readdirSync(join(ROOT, 'site')).filter((n) => n.endsWith('.html'))) {
-      const html = readFileSync(join(ROOT, 'site', f), 'utf8');
+    for (const f of readdirSync(join(ROOT, 'site', 'public')).filter((n) => n.endsWith('.html'))) {
+      const html = readFileSync(join(ROOT, 'site', 'public', f), 'utf8');
       for (const [, key, text] of html.matchAll(/data-ayah="(\d+:\d+)">([^<]*)</g)) {
         assert.equal(text, verses.get(key), `${f} ${key}`);
         checked++;

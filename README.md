@@ -121,7 +121,7 @@ Found a problem with the text itself? Please report it to [Tanzil](https://tanzi
 
 ## Support
 
-Quran Turn is free and will stay free: no ads, no paywall, and no Qur'an behind an account. If it has a place in your day, you can support it at **[quran-turn.org](https://quran-turn.org/#support)**:
+Quran Turn is free and will stay free: no ads, no paywall, and no Qur'an behind an account. If it has a place in your day, you can support it at **[quran.allrize.tech](https://quran.allrize.tech/#support)**:
 
 - **In Indonesia:** QRIS, GoPay, bank transfer or card through Midtrans. Pick 5rb / 10rb / 25rb / 50rb or your own amount.
 - **Elsewhere:** [pay with card through Stripe](https://buy.stripe.com/6oUaEYfkugo24pgaPx7ok01).
@@ -129,18 +129,30 @@ Quran Turn is free and will stay free: no ads, no paywall, and no Qur'an behind 
 The desktop app never talks to a payment provider. Its Support link only opens that page.
 
 <details>
-<summary>Deploying quran-turn.org</summary>
+<summary>Deploying quran.allrize.tech (Cloudflare Pages)</summary>
 
-`site/` is a static site plus two zero-dependency Vercel functions (`/api/donations/config` and `/api/donations/create`) that create Midtrans Snap transactions server-side. Deploy `site/` to Vercel and set these environment variables there, never in the repo:
+`site/` is a Cloudflare Pages project:
 
-| Variable | Value |
-|---|---|
-| `MIDTRANS_SERVER_KEY` | Midtrans server key (server-side only) |
-| `MIDTRANS_CLIENT_KEY` | Midtrans client key (sent to the browser for Snap) |
-| `MIDTRANS_IS_PRODUCTION` | `true` (use `false` with sandbox keys) |
-| `SITE_URL` | `https://quran-turn.org` |
+- `public/` holds the static pages.
+- `functions/api/donations/` holds two small Pages Functions that create Midtrans Snap transactions server-side.
 
-Without keys, the Midtrans button shows "Pembayaran belum tersedia" and everything else keeps working.
+Deploy it with:
+
+```bash
+cd site && npx wrangler pages deploy
+```
+
+Set the Midtrans keys as Pages secrets, never in the repo:
+
+```bash
+npx wrangler pages secret put MIDTRANS_SERVER_KEY
+```
+
+```bash
+npx wrangler pages secret put MIDTRANS_CLIENT_KEY
+```
+
+`MIDTRANS_IS_PRODUCTION` and `SITE_URL` live in `site/wrangler.toml`. Without keys, the Midtrans button shows "Pembayaran belum tersedia" and everything else keeps working.
 
 </details>
 
@@ -162,7 +174,7 @@ data/                   Tanzil text + metadata (verbatim) and checksums
 hooks/hooks.json        hook wiring for Claude Code and Codex
 .claude-plugin/         Claude Code plugin + marketplace manifests
 .codex-plugin/          Codex plugin manifest
-site/                   quran-turn.org and its donation functions
+site/                   quran.allrize.tech (Cloudflare Pages: public/ + functions/)
 scripts/                fetch + verify the Qur'an data
 test/                   node:test suites
 ```

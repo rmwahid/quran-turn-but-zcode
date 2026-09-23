@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Read the Qur'an while Claude takes its turn. Opens a quiet local reader when you send a prompt, steps aside when Claude needs you, and saves your exact ayah when the turn ends. Offline, no account, no tracking.",
   "author": { "name": "Rizaldy" },
-  "homepage": "https://quran-turn.org",
+  "homepage": "https://quran.allrize.tech",
   "repository": "https://github.com/rzrizaldy/quran-turn",
   "license": "MIT",
   "keywords": ["quran", "reading", "hooks", "offline", "focus"]

@@ -4,7 +4,7 @@
   "description": "Read the Qur'an while your coding agent takes its turn. Local-first, offline, no account.",
   "license": "MIT",
   "author": "Rizaldy",
-  "homepage": "https://quran-turn.org",
+  "homepage": "https://quran.allrize.tech",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/rzrizaldy/quran-turn.git"

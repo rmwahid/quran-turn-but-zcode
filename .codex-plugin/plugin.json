@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Read the Qur'an while Codex takes its turn. Offline, no account, no tracking.",
   "author": { "name": "Rizaldy", "url": "https://github.com/rzrizaldy" },
-  "homepage": "https://quran-turn.org",
+  "homepage": "https://quran.allrize.tech",
   "repository": "https://github.com/rzrizaldy/quran-turn",
   "license": "MIT",
   "keywords": ["quran", "reading", "hooks", "offline"],
@@ -13,7 +13,7 @@
     "longDescription": "Opens a quiet local Qur'an reader when you send a prompt, pauses when Codex needs your approval, and saves your exact ayah when the turn ends. The Tanzil Uthmani text ships verbatim and is checksum-verified before it renders. Fully offline; no account, sync or analytics.",
     "developerName": "Rizaldy",
     "category": "Productivity",
-    "websiteURL": "https://quran-turn.org",
+    "websiteURL": "https://quran.allrize.tech",
     "brandColor": "#173B39"
   }
 }
