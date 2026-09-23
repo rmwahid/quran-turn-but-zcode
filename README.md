@@ -33,10 +33,10 @@ codex plugin marketplace add rzrizaldy/quran-turn
 ```
 
 ```bash
-codex plugin add quran-turn
+codex plugin add quran-turn@quran-turn
 ```
 
-Codex asks you to trust the plugin's hooks the first time.
+Then start `codex` normally. The first time, Codex asks you to review and **trust** Quran Turn's hooks. Approve them, or nothing will happen (Codex never runs untrusted plugin hooks).
 
 ### From source
 
