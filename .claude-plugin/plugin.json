@@ -1,6 +1,6 @@
 {
   "name": "quran-turn",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "description": "Read the Qur'an while Claude takes its turn. Opens a quiet local reader when you send a prompt, steps aside when Claude needs you, and saves your exact ayah when the turn ends. Offline, no account, no tracking.",
   "author": { "name": "Rizaldy" },
   "homepage": "https://quran.allrize.tech",

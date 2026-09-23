@@ -30,7 +30,7 @@ Install the Quran Turn plugin for me. In the terminal, run `claude plugin market
 Paste this into **Codex** (CLI or the Codex app):
 
 ```text
-Install Quran Turn for Codex. Run `codex plugin marketplace add rzrizaldy/quran-turn`, then `codex plugin add quran-turn@quran-turn`, and check `codex plugin list` for an enabled Quran Turn. Tell me to open an interactive Codex CLI session, run `/hooks`, review and trust Quran Turn's four hooks, then start a new turn. Do not bypass hook trust.
+Install Quran Turn for Codex. Run `codex plugin marketplace add rzrizaldy/quran-turn`, then `codex plugin add quran-turn@quran-turn`, and confirm it is enabled with `codex plugin list`. Tell me to open interactive `codex`, run `/hooks`, and individually review and trust Quran Turn's UserPromptSubmit, PermissionRequest, PostToolUse, and Stop hooks. Do not trust unrelated hooks or bypass hook trust. Then start a new Codex turn; restart the Codex app first if I use it.
 ```
 
 ### Or run the commands yourself
@@ -55,9 +55,15 @@ codex plugin marketplace add rzrizaldy/quran-turn
 codex plugin add quran-turn@quran-turn
 ```
 
-Check `codex plugin list` for `quran-turn@quran-turn` with status **installed, enabled**. Then open an interactive Codex CLI session, run `/hooks`, review Quran Turn's four hook commands, and trust them. Start a new Codex turn after that. If you use the desktop app, restart it after installation or an update. Installing or enabling a plugin does **not** trust its hooks, and Codex skips untrusted hooks even when the plugin appears installed. Do not use `--dangerously-bypass-hook-trust` as an installation step.
+Check `codex plugin list` for `quran-turn@quran-turn` with status **installed, enabled**. Then finish the hook setup:
 
-If the reader does not open, check `/hooks` first. You can also run `node bin/quran-turn open` from a source clone to check the reader independently of Codex hooks.
+1. Start an interactive Codex CLI session with `codex` and type `/hooks`.
+2. Find the Quran Turn commands from this plugin. Review and trust each of its four events: **UserPromptSubmit**, **PermissionRequest**, **PostToolUse**, and **Stop**. Other plugins' hooks may appear in the same list; leave those to their own review.
+3. Start a new Codex turn. If you use the Codex desktop app, restart it first and then send a new prompt there.
+
+Installing or enabling the plugin does **not** trust its hooks. Codex skips untrusted hooks even when `codex plugin list` says the plugin is enabled. In our Codex CLI test, the reader opened and recorded a turn as `codex` after the four hooks were trusted, without a trust bypass. During a Codex turn the reader says **“Codex is working”**; during a Claude turn it says **“Claude is working.”**
+
+If the reader does not open, check `/hooks` and `codex plugin list` first. You can also run `node bin/quran-turn open` from a source clone to check the reader independently of Codex hooks. Do not use `--dangerously-bypass-hook-trust` as an installation step.
 
 ### From source
 
@@ -74,13 +80,13 @@ Then send any prompt. The reader opens as a small app window if Chrome, Edge, Br
 ## How it works
 
 ```
- you send a prompt ─▶ UserPromptSubmit ─▶ reader opens (or grows back) · "Claude is working" · counts ayat
+ you send a prompt ─▶ UserPromptSubmit ─▶ reader opens (or grows back) · "Codex/Claude is working" · counts ayat
                                             │
-   agent asks approval ─▶ PermissionRequest ─▶ reader shrinks to a small strip · Claude comes to the front
+   agent asks approval ─▶ PermissionRequest ─▶ reader shrinks to a small strip · your agent comes to the front
                                             │
      you approve, tool runs ─▶ PostToolUse ─▶ reader grows back to where you were reading
                                             │
-             turn ends ─▶ Stop ─▶ place saved automatically · reader shrinks · Claude comes to the front
+             turn ends ─▶ Stop ─▶ place saved automatically · reader shrinks · your agent comes to the front
 ```
 
 - **Your place saves itself.** Every ayah you move is written to disk at once, and the Stop hook closes the turn. You never need to run a command; `quran-turn log` is only there if you're curious.
@@ -140,7 +146,7 @@ Update the Quran Turn plugin: run `claude plugin marketplace update quran-turn` 
 Or paste this into Codex:
 
 ```text
-Update Quran Turn for Codex. Run `codex plugin marketplace upgrade quran-turn`, then `codex plugin add quran-turn@quran-turn`, and check `codex plugin list` for the installed version. Tell me to restart the Codex app if I use it, and to review `/hooks` in an interactive Codex CLI session if the hook definitions need trust again.
+Update Quran Turn for Codex. Run `codex plugin marketplace upgrade quran-turn`, then `codex plugin add quran-turn@quran-turn`, and confirm the latest version is enabled with `codex plugin list`. Tell me to restart the Codex app if I use it. In interactive `codex`, run `/hooks` and review any Quran Turn hooks marked new or changed before starting a new turn; do not trust unrelated hooks.
 ```
 
 **3. Or run the commands yourself** (the same ones as above). For Codex:
@@ -151,13 +157,13 @@ codex plugin add quran-turn@quran-turn
 codex plugin list
 ```
 
-Restart the Codex app if you use it. In an interactive Codex CLI session, run `/hooks` and review any Quran Turn hooks marked as new or changed; hook trust is tied to the current definition.
+Confirm the latest version is enabled. Restart the Codex app if you use it. In an interactive Codex CLI session, run `/hooks` and review any Quran Turn hooks marked as new or changed; hook trust is tied to the current definition. Codex updates are a manual step here. Claude Code's marketplace has the auto-update switch described above.
 
 Once the updated plugin is loaded and its hooks are trusted, the next prompt swaps the reader server to the new version and an open reader window reloads on its own. Your place and reading log in `~/.quran-turn` are never touched by an update.
 
 > Coming from **v0.4.0 or earlier**? Refresh or close the reader window once after updating, because the self-reload arrived in v0.4.1. From then on it's automatic.
 
-**Which version am I on?** It's in the reader's footer ("visit quran.allrize.tech for updates · v0.5.1"). Click it and the site tells you whether a newer version exists.
+**Which version am I on?** It's in the reader's footer ("visit quran.allrize.tech for updates · v0.6.0"). Click it and the site tells you whether a newer version exists.
 
 ## Using the reader
 

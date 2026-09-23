@@ -46,6 +46,6 @@ jobs:
           sha256sum "quran-turn-$V.tgz" > "quran-turn-$V.tgz.sha256"
           # Release notes = this version's section of CHANGELOG.md, plus how to update.
           awk -v v="$V" '/^## \[/ { p = index($0, "[" v "]") > 0; next } p' CHANGELOG.md > notes.md
-          printf '\n---\n**Update:** Claude Code: `/plugin` → Marketplaces → quran-turn → Enable auto-update (once), or run `claude plugin marketplace update quran-turn && claude plugin update quran-turn@quran-turn`, then `/reload-plugins`. Codex: run `codex plugin marketplace upgrade quran-turn`, `codex plugin add quran-turn@quran-turn`, and `codex plugin list`; restart the desktop app if used, then review new or changed Quran Turn hooks with `/hooks` in interactive Codex CLI.\n' >> notes.md
+          printf '\n---\n**Update:** Claude Code: `/plugin` → Marketplaces → quran-turn → Enable auto-update (once), or run `claude plugin marketplace update quran-turn && claude plugin update quran-turn@quran-turn`, then `/reload-plugins`. Codex: run `codex plugin marketplace upgrade quran-turn`, `codex plugin add quran-turn@quran-turn`, and `codex plugin list`; restart the desktop app if used. In interactive `codex`, run `/hooks` and review any new or changed Quran Turn UserPromptSubmit, PermissionRequest, PostToolUse, and Stop hooks individually before the next turn.\n' >> notes.md
           gh release create "v$V" --target "$GITHUB_SHA" --title "Quran Turn v$V" --notes-file notes.md \
             "quran-turn-$V.tgz" "quran-turn-$V.tgz.sha256"

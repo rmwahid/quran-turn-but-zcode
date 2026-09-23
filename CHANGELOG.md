@@ -2,6 +2,15 @@
 
 Every release of Quran Turn. The newest is on top. GitHub release notes and the timeline on [quran.allrize.tech](https://quran.allrize.tech/#changelog) are generated from this file.
 
+## [0.6.0] - 2026-09-23
+
+Verified Codex hook setup, with clearer install and update guides.
+
+- **Codex CLI test passed without bypassing trust.** After reviewing and trusting Quran Turn's four hooks individually, a normal Codex turn opened the reader and saved a session identified as `codex`.
+- **Installation guide names all four hooks:** UserPromptSubmit, PermissionRequest, PostToolUse, and Stop. It explains that other plugins can appear in `/hooks` and should be reviewed separately.
+- **Update guide separates the paths:** Claude Code can enable marketplace auto-update; Codex uses the marketplace upgrade and plugin add commands, then checks hook trust for changed definitions.
+- **Landing page preview names Codex** and explains that the real reader labels the active agent. The reader and Qur'an data are unchanged.
+
 ## [0.5.1] - 2026-09-23
 
 Codex installation and update instructions now include the hook trust step.
