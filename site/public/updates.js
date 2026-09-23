@@ -14,7 +14,7 @@ function inline(text) {
   let last = 0, m;
   while ((m = re.exec(text))) {
     if (m.index > last) out.push(text.slice(last, m.index));
-    out.push(m[1] !== undefined ? el('strong', { textContent: m[1] }) : el('code', { textContent: m[2] }));
+    out.push(m[1] !== undefined ? el('strong', {}, ...inline(m[1])) : el('code', { textContent: m[2] })); // bold may hold `code`
     last = re.lastIndex;
   }
   if (last < text.length) out.push(text.slice(last));
