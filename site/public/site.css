@@ -160,3 +160,47 @@ h1 span { color: var(--accent); }
 }
 .sedekah-toast.success { background: var(--marker); color: #fff; }
 button.btn { border: none; font-family: inherit; cursor: pointer; }
+
+/* ── "Works with" chips + install cards ─────────────────────────────────── */
+.logo { flex-shrink: 0; }
+.logo-claude { color: #d97757; }
+.logo-openai { color: var(--ink); }
+.works { margin-top: 28px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.works-label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); margin-right: 4px; }
+.chip {
+  height: 44px; padding: 0 18px 0 14px; display: inline-flex; align-items: center; gap: 10px;
+  border: 1px solid var(--line); border-radius: 999px; background: var(--card);
+  font-size: 15px; font-weight: 700; color: var(--ink); text-decoration: none;
+  transition: border-color 0.2s ease, transform 0.15s ease;
+}
+.chip:hover { border-color: var(--teal); }
+.chip:active { transform: scale(0.98); }
+
+.install-band { border-top: 1px solid var(--soft); background: color-mix(in srgb, var(--card) 60%, var(--page)); }
+.install-band .wrap { padding-top: 44px; padding-bottom: 44px; }
+.install-band h2 { margin: 0 0 20px; font-size: 22px; font-weight: 800; letter-spacing: -0.01em; }
+.install-grid { display: grid; gap: 16px; }
+@media (min-width: 860px) { .install-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.install-card {
+  min-width: 0; padding: 20px; display: flex; flex-direction: column; gap: 14px;
+  border: 1px solid var(--line); border-radius: 18px; background: var(--card); scroll-margin-top: 24px;
+}
+.install-card:target { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(35, 156, 132, 0.15); }
+.install-head { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 800; }
+.install-head span { flex: 1; }
+.install-head .logo { width: 22px; height: 22px; }
+.cmd { position: relative; }
+.cmd pre {
+  margin: 0; padding: 14px 16px; border-radius: 12px; background: var(--code-bg); color: var(--code);
+  font-family: var(--mono); font-size: 12.5px; line-height: 1.9; overflow-x: auto;
+}
+.cmd b { color: var(--code-accent); font-weight: 400; }
+.copy {
+  height: 32px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line);
+  background: var(--page); font: 600 12px var(--sans); color: var(--ink); cursor: pointer;
+}
+.copy:hover { border-color: var(--teal); }
+.copy:focus-visible, .chip:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+.install-note { margin: 0; font-size: 13px; line-height: 1.5; color: var(--muted); }
+.install-note code { font-family: var(--mono); font-size: 12px; }
+.install-req { margin: 16px 0 0; font-size: 13px; font-weight: 600; color: var(--muted); }
