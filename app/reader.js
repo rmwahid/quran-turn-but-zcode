@@ -80,7 +80,8 @@ function renderStatus() {
   back.title = 'Space';
   back.setAttribute('aria-keyshortcuts', 'Space');
   back.hidden = !canSwitch;
-  $('back-hint').hidden = !canSwitch;
+  // Only advertise Space when it really goes back (see agentWaiting).
+  $('back-hint').hidden = !(canSwitch && (status === 'needs_you' || (status === 'done' && isCompact())));
   clearTimeout(doneTimer);
   if (status === 'needs_you') {
     banner.dataset.kind = 'needs_you';
@@ -232,8 +233,11 @@ function backToAgent() {
   fetch('/api/back-to-agent', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' }).catch(() => {});
 }
 
-// When the agent is waiting on you (or done), Space/Enter jumps straight back to it.
-const agentWaiting = () => canSwitch && (agent.status === 'needs_you' || agent.status === 'done');
+// The window is collapsed to the small strip (see the compact media query).
+const isCompact = () => window.innerHeight < 180;
+// Space/Enter jumps back to the agent while it waits on you, or from the strip
+// after a turn. Once you "Open" the reader again after a turn, Space reads on.
+const agentWaiting = () => canSwitch && (agent.status === 'needs_you' || (agent.status === 'done' && isCompact()));
 
 function onKey(e) {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
@@ -246,6 +250,8 @@ function onKey(e) {
     e.preventDefault();
     return backToAgent();
   }
+  // In the strip the ayah isn't visible, so don't move it.
+  if (isCompact()) return;
   // Arabic reads right-to-left, so ← moves forward.
   if (k === 'ArrowLeft' || k === 'j' || k === ' ') { e.preventDefault(); step(1); }
   else if (k === 'ArrowRight' || k === 'k') { e.preventDefault(); step(-1); }
@@ -291,6 +297,7 @@ async function init() {
     });
   }
   document.addEventListener('keydown', onKey);
+  window.addEventListener('resize', () => renderStatus());
   buildSurahList();
 
   try {

@@ -6,8 +6,8 @@ Quran Turn is a plugin for **Claude Code** and **Codex**. When you send your age
 
 <p align="center">
   <img src="docs/reader-working.png" width="260" alt="Reader while Claude is working, showing Al-Baqara 2:155">
-  <img src="docs/reader-needs-you.png" width="260" alt="Reader paused because Claude needs permission">
-  <img src="docs/reader-done-dark.png" width="260" alt="Reader in dark mode after the turn finished, place saved at 2:157">
+  <img src="docs/reader-needs-you.png" width="260" alt="Claude needs you: a Back to Claude button, or press Space">
+  <img src="docs/reader-done-dark.png" width="260" alt="Dark mode after the turn finished: saved at 2:157 automatically">
 </p>
 
 - **Exact Qur'an text.** It ships Tanzil's verified Uthmani text byte-for-byte and checks it by SHA-256 before a single letter renders. No code path, and no LLM, ever edits it.
