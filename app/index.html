@@ -69,17 +69,22 @@
   </footer>
   <a class="site-note" id="site-note" target="_blank" rel="noopener noreferrer">visit quran.allrize.tech for updates<span id="version"></span></a>
 
-  <div class="sheet" id="jump" hidden role="dialog" aria-modal="true" aria-label="Go to surah or ayah">
+  <div class="sheet" id="jump" hidden role="dialog" aria-modal="true" aria-labelledby="jump-title">
     <header class="bar">
-      <span class="wordmark">GO TO</span>
+      <span class="wordmark" id="jump-title">GO TO</span>
       <button type="button" class="btn btn-small" id="close-jump">Close</button>
     </header>
-    <form class="jump-fields" id="jump-form">
-      <label class="field grow"><span>Surah</span><input id="jump-search" type="search" placeholder="Search name or number" autocomplete="off"></label>
-      <label class="field ref"><span>Ayah</span><input id="jump-ref" type="text" placeholder="2:255" inputmode="numeric" autocomplete="off"></label>
+    <form class="jump-fields" id="jump-form" role="search">
+      <label class="field grow"><span id="jump-label">Surah, juz, ayah, page or Arabic words</span>
+        <input id="jump-q" type="search" placeholder="kahfi · juz 30 · 2:255 · hal 50 · الرحمن" autocomplete="off" spellcheck="false" dir="auto"></label>
     </form>
-    <ul class="surah-list" id="surah-list"></ul>
-    <footer class="foot"><span>114 surahs · 6236 ayat</span><span>esc to close</span></footer>
+    <div class="quick" id="quick" aria-label="Quick starts"></div>
+    <div class="browse" id="browse" role="tablist" aria-label="Browse">
+      <button type="button" role="tab" data-browse="surah" aria-selected="true">Surah</button>
+      <button type="button" role="tab" data-browse="juz" aria-selected="false">Juz</button>
+    </div>
+    <ul class="surah-list" id="jump-results" aria-live="polite"></ul>
+    <footer class="foot"><span id="jump-count">114 surahs · 30 juz</span><span>enter · esc</span></footer>
   </div>
 </main>
 <noscript>Quran Turn needs JavaScript to display the text.</noscript>

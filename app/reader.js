@@ -1,7 +1,7 @@
 // Quran Turn reader. Ayah strings only ever reach the page through textContent
 // and are never altered; the file is checked against its pinned SHA-256 first.
 import { QURAN_SHA256, SITE_URL, SUPPORT_URL, VERSION } from './config.js';
-import { arabicDigits, parseTanzil, sha256Hex, splitBasmala } from './quran-core.js';
+import { QUICK_STARTS, arabicDigits, buildSearchIndex, parseTanzil, resolveQuery, sha256Hex, splitBasmala } from './quran-core.js';
 import { FloatCard, canFloat } from './float.js';
 
 const $ = (id) => document.getElementById(id);
@@ -17,6 +17,7 @@ let saving = Promise.resolve();
 let pendingSaves = 0;
 let doneTimer = null;
 let floating = false;
+let firstRun = false;
 
 const store = {
   get(k) { try { return localStorage.getItem(k); } catch { return null; } },
@@ -165,6 +166,7 @@ function floatKey(ev) {
   const k = ev.key;
   if (k === 'ArrowLeft' || k === 'j' || k === ' ') { ev.preventDefault(); step(1); }
   else if (k === 'ArrowRight' || k === 'k') { ev.preventDefault(); step(-1); }
+  else if (k === 'g') { ev.preventDefault(); card.close().then(() => openJump()); }
 }
 
 function setFloating(on) {
@@ -216,44 +218,101 @@ function valid(p) {
     Number.isInteger(p.ayah) && p.ayah >= 1 && p.ayah <= counts[p.surah];
 }
 
-// ── Go-to sheet ─────────────────────────────────────────────────────────────
+// ── Go to / start from ──────────────────────────────────────────────────────
+// One search box: "kahfi", "36", "juz 30", "2:255", "hal 50", or Arabic words.
+// Matching uses normalized keys (quran-core.js); every ayah shown here is the
+// verbatim text, written through fillAyah() like everywhere else.
 
-function buildSurahList() {
-  const list = $('surah-list');
-  for (let s = 1; s <= 114; s++) {
-    const [, ayas, , , ar, tr, en] = meta.Sura[s];
-    const li = document.createElement('li');
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.dataset.surah = s;
-    b.dataset.search = `${s} ${tr} ${en} ${ar}`.toLowerCase().replace(/[-'’]/g, '');
-    const num = Object.assign(document.createElement('span'), { className: 'surah-num', textContent: s });
-    const names = Object.assign(document.createElement('span'), { className: 'surah-names' });
-    names.append(
-      Object.assign(document.createElement('span'), { className: 'surah-tr', textContent: tr }),
-      Object.assign(document.createElement('span'), { className: 'surah-en', textContent: `${en} · ${ayas} ayat` }),
-    );
-    const arEl = Object.assign(document.createElement('span'), { className: 'surah-ar', textContent: ar });
-    arEl.lang = 'ar';
-    arEl.dir = 'rtl';
-    b.append(num, names, arEl);
-    b.addEventListener('click', () => { closeJump(); go({ surah: s, ayah: 1 }); });
-    li.append(b);
-    list.append(li);
+let searchIndex = null; // built on the first Arabic search (~50 ms)
+let browseMode = 'surah';
+
+const tag = (name, props = {}, ...children) => {
+  const n = Object.assign(document.createElement(name), props);
+  n.append(...children);
+  return n;
+};
+const surahName = (s) => meta.Sura[s][5];
+
+function resultRow(r) {
+  const [, ayas, , , ar, tr, en] = meta.Sura[r.surah];
+  const b = tag('button', { type: 'button', className: 'result' });
+  b.dataset.kind = r.kind;
+  let num, title, sub;
+  if (r.kind === 'juz') {
+    num = `J${r.n}`; title = `Juz ${r.n}`; sub = `starts ${tr} ${r.surah}:${r.ayah}`;
+  } else if (r.kind === 'page') {
+    num = `p${r.n}`; title = `Page ${r.n}`; sub = `starts ${tr} ${r.surah}:${r.ayah}`;
+  } else if (r.kind === 'ayah') {
+    num = `${r.surah}:${r.ayah}`; title = tr; sub = en;
+  } else {
+    num = String(r.surah); title = tr; sub = `${en} · ${ayas} ayat`;
   }
+  const names = tag('span', { className: 'surah-names' },
+    tag('span', { className: 'surah-tr', textContent: title }),
+    tag('span', { className: 'surah-en', textContent: sub }));
+  if (r.kind === 'ayah') {
+    const text = tag('span', { className: 'result-ayah', lang: 'ar', dir: 'rtl' });
+    fillAyah(text, r.surah, r.ayah); // verbatim, verified
+    names.append(text);
+  }
+  const arEl = tag('span', { className: 'surah-ar', lang: 'ar', dir: 'rtl', textContent: ar });
+  b.append(tag('span', { className: 'surah-num', textContent: num }), names, arEl);
+  b.setAttribute('aria-current', String(r.kind === 'surah' && r.surah === pos.surah));
+  b.addEventListener('click', () => { closeJump(); go({ surah: r.surah, ayah: r.ayah }); });
+  return tag('li', {}, b);
 }
 
-function openJump() {
+function renderResults() {
+  const q = $('jump-q').value.trim();
+  $('browse').hidden = Boolean(q);
+  $('quick').hidden = Boolean(q);
+  let items;
+  if (!q) {
+    items = browseMode === 'juz'
+      ? Array.from({ length: 30 }, (_, i) => ({ kind: 'juz', n: i + 1, surah: meta.Juz[i + 1][0], ayah: meta.Juz[i + 1][1] }))
+      : Array.from({ length: 114 }, (_, i) => ({ kind: 'surah', surah: i + 1, ayah: 1 }));
+  } else {
+    if (!searchIndex && /[\u0600-\u06FF]/.test(q)) searchIndex = buildSearchIndex(quran.bySurah);
+    items = resolveQuery(q, meta, quran.bySurah, searchIndex);
+  }
+  $('jump-results').replaceChildren(...items.map(resultRow));
+  if (!items.length) {
+    $('jump-results').append(tag('li', { className: 'no-results', textContent: 'Nothing found. Try “kahfi”, “juz 30”, “2:255”, “hal 50” or a few Arabic words.' }));
+  }
+  const ayat = items.filter((r) => r.kind === 'ayah').length;
+  $('jump-count').textContent = !q ? '114 surahs · 30 juz'
+    : ayat >= 50 ? 'first 50 · add words to narrow' : `${items.length} result${items.length === 1 ? '' : 's'}`;
+}
+
+function buildQuickStarts(firstRun) {
+  const chips = [];
+  if (!firstRun) chips.push({ label: `Continue ${pos.surah}:${pos.ayah}`, pick: () => closeJump() });
+  for (const qs of QUICK_STARTS) {
+    const [r] = resolveQuery(qs.query, meta, quran.bySurah);
+    if (r) chips.push({ label: qs.label, pick: () => { closeJump(); go({ surah: r.surah, ayah: r.ayah }); } });
+  }
+  $('quick').replaceChildren(...chips.map((c) => {
+    const b = tag('button', { type: 'button', className: 'chip', textContent: c.label });
+    b.addEventListener('click', c.pick);
+    return b;
+  }));
+}
+
+function setBrowse(mode) {
+  browseMode = mode;
+  for (const t of $('browse').querySelectorAll('[data-browse]')) t.setAttribute('aria-selected', String(t.dataset.browse === mode));
+  renderResults();
+}
+
+function openJump({ firstRun = false } = {}) {
   if (!quran) return;
   $('jump').hidden = false;
-  for (const b of $('surah-list').querySelectorAll('button')) {
-    b.setAttribute('aria-current', String(Number(b.dataset.surah) === pos.surah));
-  }
-  $('jump-search').value = '';
-  $('jump-ref').value = '';
-  filterSurahs();
-  $('jump-search').focus();
-  $('surah-list').querySelector('[aria-current="true"]')?.scrollIntoView({ block: 'center' });
+  $('jump-title').textContent = firstRun ? 'WHERE WOULD YOU LIKE TO START?' : 'GO TO';
+  $('jump-q').value = '';
+  buildQuickStarts(firstRun);
+  setBrowse('surah');
+  $('jump-q').focus();
+  $('jump-results').querySelector('[aria-current="true"]')?.scrollIntoView({ block: 'center' });
 }
 
 function closeJump() {
@@ -261,26 +320,20 @@ function closeJump() {
   $('open-jump').focus();
 }
 
-function filterSurahs() {
-  const q = $('jump-search').value.trim().toLowerCase().replace(/[-'’]/g, '');
-  for (const b of $('surah-list').querySelectorAll('button')) {
-    b.parentElement.hidden = q !== '' && !(b.dataset.surah === q || b.dataset.search.includes(q));
+// Enter opens the first result; ↓/↑ move through results.
+function onJumpKey(e) {
+  const buttons = [...$('jump-results').querySelectorAll('button.result')];
+  const i = buttons.indexOf(document.activeElement);
+  if (e.key === 'Enter' && e.target === $('jump-q')) {
+    e.preventDefault();
+    buttons[0]?.click();
+  } else if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    (buttons[i + 1] || buttons[0])?.focus();
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    (i <= 0 ? $('jump-q') : buttons[i - 1]).focus();
   }
-}
-
-function submitJump(e) {
-  e.preventDefault();
-  const ref = $('jump-ref').value.trim();
-  if (ref) {
-    const m = ref.match(/^(\d{1,3})(?:\s*[:.\s]\s*(\d{1,3}))?$/);
-    const p = m && { surah: Number(m[1]), ayah: Number(m[2] || 1) };
-    if (!valid(p)) { $('jump-ref').setAttribute('aria-invalid', 'true'); return; }
-    $('jump-ref').removeAttribute('aria-invalid');
-    closeJump();
-    return go(p);
-  }
-  const first = [...$('surah-list').querySelectorAll('li:not([hidden]) button')][0];
-  if (first) first.click();
 }
 
 // ── Preferences ─────────────────────────────────────────────────────────────
@@ -370,17 +423,12 @@ async function init() {
     if (store.get('quran-turn:float') === '1') $('float-btn').classList.add('nudge');
   }
   $('close-jump').addEventListener('click', closeJump);
-  $('jump-search').addEventListener('input', filterSurahs);
-  $('jump-form').addEventListener('submit', submitJump);
-  // Two text fields and no submit button: Enter doesn't submit implicitly.
-  for (const id of ['jump-search', 'jump-ref']) {
-    $(id).addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') { e.preventDefault(); $('jump-form').requestSubmit(); }
-    });
-  }
+  $('jump-q').addEventListener('input', renderResults);
+  $('jump-form').addEventListener('submit', (e) => e.preventDefault());
+  $('jump').addEventListener('keydown', onJumpKey);
+  for (const t of $('browse').querySelectorAll('[data-browse]')) t.addEventListener('click', () => setBrowse(t.dataset.browse));
   document.addEventListener('keydown', onKey);
   window.addEventListener('resize', () => renderStatus());
-  buildSurahList();
 
   try {
     quran = await loadText();
@@ -392,6 +440,7 @@ async function init() {
   try {
     const snap = await (await fetch('/api/state', { cache: 'no-store' })).json();
     if (valid(snap.position)) pos = { surah: snap.position.surah, ayah: snap.position.ayah };
+    firstRun = !snap.position?.updated_at && !store.get('quran-turn:position');
     agent = snap.agent;
     canSwitch = Boolean(snap.canSwitch);
   } catch {
@@ -402,6 +451,8 @@ async function init() {
   }
   renderAyah();
   renderStatus();
+  // First time ever (no saved place yet): ask where to start instead of assuming 1:1.
+  if (firstRun && !isCompact()) openJump({ firstRun: true });
 
   const events = new EventSource('/api/events');
   events.onmessage = (e) => { try { applySnapshot(JSON.parse(e.data)); } catch {} };

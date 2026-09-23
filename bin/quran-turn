@@ -2,9 +2,10 @@
 // quran-turn — read the Qur'an while your coding agent takes its turn.
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { formatRef, loadMeta } from '../src/quran.mjs';
+import { buildSearchIndex, resolveQuery } from '../app/quran-core.js';
+import { formatRef, loadMeta, loadQuran } from '../src/quran.mjs';
 import { DEFAULT_PORT, startServer } from '../src/server.mjs';
-import { applyHook, home, logError, readJson, readSessions, writeJson } from '../src/state.mjs';
+import { applyHook, home, logError, readJson, readSessions, setPosition, writeJson } from '../src/state.mjs';
 
 const [cmd, ...rest] = process.argv.slice(2);
 const flag = (name) => {
@@ -112,6 +113,7 @@ const HELP = `quran-turn — read the Qur'an while your coding agent takes its t
 
   quran-turn open           open the reader window
   quran-turn where          your current position
+  quran-turn start <where>  start reading from: 2:255 · juz 30 · kahfi · 36 · hal 50 · Arabic words
   quran-turn log [n]        the last n turns (default 10)
   quran-turn status         one-line status (for a terminal status line)
   quran-turn on | off       enable or pause the hooks
@@ -136,6 +138,27 @@ try {
       if (!(await ensureServer())) throw new Error('could not start the reader server');
       const r = await call('/api/open', {});
       console.log(r.opened ? `Opened ${base}/` : `Reader already open (${base}/)`);
+      break;
+    }
+    case 'start':
+    case 'go': {
+      const words = [];
+      for (let i = 0; i < rest.length; i++) (rest[i] === '--port' ? i++ : words.push(rest[i]));
+      const q = words.join(' ');
+      if (!q) throw new Error('say where to start, e.g. `quran-turn start juz 30`, `start kahfi` or `start 2:255`');
+      const meta = loadMeta();
+      const { bySurah } = loadQuran();
+      const index = /[\u0600-\u06FF]/.test(q) ? buildSearchIndex(bySurah) : null;
+      const [r] = resolveQuery(q, meta, bySurah, index);
+      if (!r) throw new Error(`nothing found for "${q}". Try 2:255, juz 30, kahfi, 36 or hal 50`);
+      const pos = { surah: r.surah, ayah: r.ayah };
+      try {
+        await call('/api/position', pos); // an open reader follows along
+      } catch {
+        setPosition(pos, meta.Sura.map((x) => x[1] ?? 0));
+      }
+      const what = r.kind === 'juz' ? `Juz ${r.n} · ` : r.kind === 'page' ? `Page ${r.n} · ` : '';
+      console.log(`Starting at ${what}${formatRef(meta, r.surah, r.ayah)}`);
       break;
     }
     case 'where': {

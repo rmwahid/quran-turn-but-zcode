@@ -53,3 +53,133 @@ export async function sha256Hex(bytes) {
   const digest = await globalThis.crypto.subtle.digest('SHA-256', bytes);
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
+
+// ── Search and jump ─────────────────────────────────────────────────────────
+// Everything below is for *finding* a place. Normalized strings are used only
+// for matching and are never shown; results point at (surah, ayah) and the
+// reader renders the verbatim Tanzil text for them.
+
+// Arabic: drop harakat, Qur'anic marks and tatweel; unify alef/yaa/taa-marbuta
+// forms. The small (dagger) alef becomes a plain alef, so modern spelling like
+// "العالمين" matches the Uthmani "ٱلْعَـٰلَمِينَ".
+export function arabicKey(s) {
+  return s
+    .replace(/\u0670/g, '\u0627')
+    .replace(/[\u0610-\u061A\u064B-\u065F\u06D6-\u06ED\u0640]/g, '')
+    .replace(/[\u0671\u0622\u0623\u0625]/g, '\u0627')
+    .replace(/\u0649/g, '\u064A')
+    .replace(/\u0629/g, '\u0647')
+    .replace(/\u0624/g, '\u0648')
+    .replace(/\u0626/g, '\u064A')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// Looser still: the consonant skeleton (no long vowels), so "الصلاة" also finds
+// the Uthmani "ٱلصَّلَوٰةَ". Used only as a fallback after exact matches.
+export const skeletonKey = (s) => arabicKey(s).replace(/[\u0627\u0648\u064A]/g, '');
+
+// Latin surah names: "Al-Faatiha", "Yaseen", "Al-Kahf" should match "fatihah", "yasin", "kahfi".
+export function latinKey(s) {
+  return s
+    .toLowerCase()
+    .replace(/^(al|an|ar|as|at|ad|adh|az|ash|ath)[\s-]+/, '')
+    .replace(/[^a-z]/g, '')
+    .replace(/(.)\1+/g, '$1')
+    .replace(/e/g, 'i')
+    .replace(/h$/, '');
+}
+
+const hasArabic = (s) => /[؀-ۿ]/.test(s);
+
+// → [{ kind: 'ayah' | 'surah' | 'juz' | 'page', surah, ayah, n? }], best first.
+// meta is Tanzil's QuranData; verses/bySurah come from parseTanzil(); index is
+// buildSearchIndex(bySurah) (only needed for Arabic text search).
+export function resolveQuery(query, meta, bySurah, index = null, { limit = 50 } = {}) {
+  const q = String(query || '').trim();
+  if (!q) return [];
+  const count = (s) => bySurah[s]?.length || 0;
+  const out = [];
+  const add = (r) => {
+    if (r.surah >= 1 && r.surah <= 114 && r.ayah >= 1 && r.ayah <= count(r.surah)) out.push(r);
+  };
+
+  let m;
+  if ((m = q.match(/^(\d{1,3})\s*[:.\s-]\s*(\d{1,3})$/))) add({ kind: 'ayah', surah: +m[1], ayah: +m[2] });
+  if ((m = q.match(/^(?:juz'?|jz|j|part)\s*(\d{1,2})$/i)) && +m[1] >= 1 && +m[1] <= 30) {
+    const [surah, ayah] = meta.Juz[+m[1]];
+    add({ kind: 'juz', n: +m[1], surah, ayah });
+  }
+  if ((m = q.match(/^(?:page|p|hal|halaman)\s*(\d{1,3})$/i)) && +m[1] >= 1 && +m[1] <= 604) {
+    const [surah, ayah] = meta.Page[+m[1]];
+    add({ kind: 'page', n: +m[1], surah, ayah });
+  }
+  if ((m = q.match(/^(\d{1,3})$/)) && +m[1] >= 1 && +m[1] <= 114) add({ kind: 'surah', surah: +m[1], ayah: 1 });
+  if (out.length) return out;
+
+  // Surah names (Latin transliteration, English meaning, Arabic name), best match first.
+  const qa = hasArabic(q) ? arabicKey(q) : null;
+  const ql = latinKey(q);
+  const qe = q.toLowerCase();
+  const named = [];
+  for (let s = 1; s <= 114; s++) {
+    const [, , , , ar, tr, en] = meta.Sura[s];
+    let score = -1;
+    if (qa) {
+      const ak = arabicKey(ar);
+      score = ak === qa ? 0 : ak.startsWith(qa) ? 1 : ak.includes(qa) ? 2 : -1;
+    } else {
+      const lk = latinKey(tr);
+      if (ql.length >= 2 && lk === ql) score = 0;
+      else if (ql.length >= 3 && lk.startsWith(ql)) score = 1;
+      else if (ql.length >= 3 && (lk.includes(ql) || (lk.length >= 4 && ql.includes(lk)))) score = 2;
+      else if (qe.length >= 3 && en.toLowerCase().includes(qe)) score = 3;
+    }
+    if (score >= 0) named.push([score, s]);
+  }
+  named.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  for (const [, s] of named) add({ kind: 'surah', surah: s, ayah: 1 });
+
+  // Arabic words: search the text of every ayah; exact spelling first, then skeleton.
+  if (qa && qa.length >= 2 && index) {
+    const seen = new Set();
+    const take = (pred) => {
+      for (const [surah, ayah, key, skel] of index) {
+        if (out.length >= limit) return;
+        if (!seen.has(`${surah}:${ayah}`) && pred(key, skel)) {
+          seen.add(`${surah}:${ayah}`);
+          add({ kind: 'ayah', surah, ayah, match: true });
+        }
+      }
+    };
+    take((key) => key.includes(qa));
+    const qs = skeletonKey(q);
+    if (qs.length >= 2) take((_, skel) => skel.includes(qs));
+  }
+  return out;
+}
+
+// The basmala Tanzil prefixes to ayah 1 of 112 surahs is left out of the search
+// keys (only), so a search for "الرحمن الرحيم" finds ayat that say it, not
+// every surah opening. 1:1 itself stays searchable. Display is unaffected.
+export function buildSearchIndex(bySurah) {
+  const index = [];
+  const fatiha = bySurah[1][0];
+  for (let s = 1; s < bySurah.length; s++) {
+    bySurah[s].forEach((t, i) => {
+      const split = splitBasmala(s, i + 1, t, fatiha);
+      const body = split ? split.rest : t;
+      index.push([s, i + 1, arabicKey(body), skeletonKey(body)]);
+    });
+  }
+  return index;
+}
+
+// Handy starting points (Friday's Al-Kahf, Yasin, nightly Al-Mulk, Juz 'Amma).
+export const QUICK_STARTS = [
+  { label: 'Al-Fatihah', query: '1' },
+  { label: "Juz 'Amma", query: 'juz 30' },
+  { label: 'Al-Kahf', query: '18' },
+  { label: 'Yasin', query: '36' },
+  { label: 'Al-Mulk', query: '67' },
+];

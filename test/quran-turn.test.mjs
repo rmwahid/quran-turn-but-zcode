@@ -4,7 +4,7 @@ import { mkdtempSync, readFileSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { beforeEach, describe, test } from 'node:test';
-import { AYAH_COUNT, parseTanzil, splitBasmala } from '../app/quran-core.js';
+import { AYAH_COUNT, QUICK_STARTS, buildSearchIndex, parseTanzil, resolveQuery, splitBasmala } from '../app/quran-core.js';
 import { ROOT, TEXT_PATH, loadMeta, loadQuran } from '../src/quran.mjs';
 
 const meta = loadMeta();
@@ -77,6 +77,49 @@ describe('Qur’an text', () => {
     assert.throws(() => parseTanzil('1|1|a\n1|1|b\n'), /Duplicate/);
     assert.throws(() => parseTanzil('1|1|\n'), /Empty/);
     assert.throws(() => parseTanzil('1|2|a\n'), /Out-of-order/);
+  });
+});
+
+describe('go to / start from', () => {
+  const { bySurah } = loadQuran();
+  const index = buildSearchIndex(bySurah);
+  const first = (q) => {
+    const [r] = resolveQuery(q, meta, bySurah, index);
+    return r ? `${r.kind} ${r.surah}:${r.ayah}` : null;
+  };
+
+  test('references, juz and pages', () => {
+    assert.equal(first('2:255'), 'ayah 2:255');
+    assert.equal(first('2.255'), 'ayah 2:255');
+    assert.equal(first('2:287'), null, 'Al-Baqara has 286 ayat');
+    assert.equal(first('18'), 'surah 18:1');
+    assert.equal(first('115'), null);
+    assert.equal(first('juz 1'), 'juz 1:1');
+    assert.equal(first('juz 30'), 'juz 78:1');
+    assert.equal(first('j15'), 'juz 17:1');
+    assert.equal(first('juz 31'), null);
+    assert.equal(first('hal 1'), 'page 1:1');
+    assert.equal(first('page 604'), 'page 112:1');
+  });
+
+  test('surah names the way people type them', () => {
+    for (const [q, s] of [['kahfi', 18], ['Al-Kahf', 18], ['yasin', 36], ['Yaseen', 36], ['fatihah', 1], ['al fatiha', 1],
+      ['al-mulk', 67], ['rahman', 55], ['ikhlas', 112], ['nas', 114], ['the cave', 18], ['الكهف', 18]]) {
+      assert.equal(first(q), `surah ${s}:1`, q);
+    }
+    assert.equal(first('zzz'), null);
+  });
+
+  test('Arabic text search, with modern spelling finding Uthmani text', () => {
+    assert.equal(first('قل هو الله احد'), 'ayah 112:1');
+    assert.equal(first('الحمد لله رب العالمين'), 'ayah 1:2');
+    assert.equal(first('الله لا اله الا هو الحي القيوم'), 'ayah 2:255');
+    assert.ok(resolveQuery('الصلاة', meta, bySurah, index).some((r) => r.surah === 2 && r.ayah === 43), 'skeleton match: الصلاة → ٱلصَّلَوٰةَ');
+    assert.ok(resolveQuery('الصلاة', meta, bySurah, index).length <= 50, 'results are capped');
+  });
+
+  test('every quick start resolves', () => {
+    for (const qs of QUICK_STARTS) assert.ok(first(qs.query), qs.label);
   });
 });
 
@@ -178,6 +221,15 @@ describe('hook CLI', () => {
     assert.equal(r.status, 0);
     const { readJson } = await state;
     assert.equal(readJson('agent.json').agent, 'codex');
+  });
+
+  test('`quran-turn start` moves your place without a server', async () => {
+    const out = execFileSync(process.execPath, [BIN, 'start', 'juz', '30'], { env: process.env, encoding: 'utf8' });
+    assert.match(out, /Juz 30 · An-Naba 78:1/);
+    const { readJson } = await state;
+    assert.equal(`${readJson('state.json').surah}:${readJson('state.json').ayah}`, '78:1');
+    const r = spawnSync(process.execPath, [BIN, 'start', 'zzz'], { env: process.env, encoding: 'utf8' });
+    assert.equal(r.status, 1);
   });
 
   test('status line', () => {

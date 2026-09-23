@@ -258,3 +258,28 @@ button, input { font: inherit; color: inherit; }
 .float-btn.nudge { animation: nudge 1.6s ease-in-out 2; }
 @keyframes nudge { 0%, 100% { box-shadow: 0 0 0 0 transparent; } 50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--teal) 25%, transparent); } }
 @media (max-height: 180px) { .float-btn { display: none; } }
+
+/* ── Go to / start from ────────────────────────────────────────────────────── */
+.quick { flex-shrink: 0; padding: 2px 22px 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  height: 30px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--page);
+  font-size: 12px; font-weight: 600; color: var(--ink); cursor: pointer;
+}
+.chip:first-child { background: var(--ink); color: var(--card); border-color: var(--ink); }
+.chip:hover { border-color: var(--teal); }
+.browse { flex-shrink: 0; margin: 0 22px 6px; display: flex; gap: 4px; padding: 3px; border-radius: 10px; background: var(--page); border: 1px solid var(--soft); }
+.browse button {
+  flex: 1; height: 28px; border: none; border-radius: 8px; background: transparent; font-size: 12px; font-weight: 700;
+  color: var(--muted); cursor: pointer;
+}
+.browse button[aria-selected="true"] { background: var(--card); color: var(--ink); box-shadow: 0 1px 2px rgba(23, 59, 57, 0.12); }
+.result .surah-num { width: auto; min-width: 28px; }
+.result-ayah {
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  margin-top: 4px; font-family: var(--quran); font-size: 17px; line-height: 1.8; color: var(--ink); text-align: right;
+}
+.result-ayah .basmala { display: inline; font-size: 1em; color: var(--muted); }
+.result[data-kind="ayah"] { align-items: flex-start; padding-top: 10px; padding-bottom: 10px; }
+.result[data-kind="ayah"] .surah-ar { display: none; }
+.no-results { padding: 18px 14px; font-size: 13px; line-height: 1.6; color: var(--muted); }
+.chip:focus-visible, .browse button:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }

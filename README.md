@@ -99,6 +99,30 @@ Press **Float** in the reader (or the **F** key) and the reader becomes a small 
 
 Float uses Chrome's Document Picture-in-Picture, so it needs **Chrome, Edge or Brave**, on macOS, Windows or Linux. Opening it takes one click or key press per session, because browsers require that for floating windows. Without Float, the reader works as a regular window, which shrinks to a strip when the agent needs you (macOS).
 
+## Start anywhere, find anything
+
+The first time the reader opens, it asks **where you'd like to start**. After that, press **G** (or click the counter at the bottom) to go anywhere. One search box understands:
+
+| Type | Goes to |
+|---|---|
+| `2:255` | an ayah (Ayat al-Kursi) |
+| `18` · `kahfi` · `yasin` · `al-mulk` · `the cave` · `الكهف` | a surah, by number, name or meaning |
+| `juz 30` · `j15` | the start of a juz |
+| `hal 50` · `page 604` | the start of a page in the Madani mushaf |
+| `قل هو الله احد` · `الصلاة` | ayat containing those Arabic words |
+
+There are one-tap starts for **Al-Fatihah, Juz 'Amma, Al-Kahf, Yasin and Al-Mulk**, and you can browse by **Surah** or **Juz**.
+
+Search is forgiving. Harakat are optional, and modern spelling finds Uthmani spelling ("الصلاة" finds "ٱلصَّلَوٰةَ"). That loosening is used **only for matching**: every ayah in the results is shown exactly as Tanzil's text. The juz and page starts come straight from Tanzil's metadata.
+
+From the terminal:
+
+```bash
+quran-turn start juz 30
+```
+
+`start` accepts anything the search box accepts: `start kahfi`, `start 2:255`, `start hal 50`.
+
 ## Updating
 
 A new version is released automatically whenever the version number changes on `main` (see `.github/workflows/release.yml`). To get it:
@@ -132,7 +156,7 @@ Restart the agent afterwards. Your reading position and log live in `~/.quran-tu
 | `←` `j` `space` | Next ayah while the agent works (Arabic reads right to left) |
 | `space` / `enter` | **Back to Claude/Codex**, when it needs you or is done |
 | `→` `k` | Previous ayah |
-| `g` | Go to a surah, or type `2:255` |
+| `g` | **Go to / search**: surah, juz, ayah, page or Arabic words |
 | `+` / `-` | Text size |
 | `d` | Toggle light / dark |
 | `f` | **Float**: the always-on-top ayah card |
@@ -141,6 +165,7 @@ Restart the agent afterwards. Your reading position and log live in `~/.quran-tu
 ```
 quran-turn open        open the reader window
 quran-turn where       your current position        → Al-Baqara 2:157  البقرة
+quran-turn start <…>   start from anywhere          → quran-turn start juz 30
 quran-turn log [n]     your last n turns            → Sep 22, 8:42 PM  2:153 → 2:157  4 ayat  claude
 quran-turn status      one line for a status bar    → ☾ quran-turn · Al-Baqara 2:157 · reading
 quran-turn on | off    enable or pause the hooks
