@@ -7,7 +7,7 @@ import { FloatCard, canFloat } from './float.js';
 const $ = (id) => document.getElementById(id);
 const meta = window.QuranData;
 const counts = meta.Sura.map((s) => s[1] ?? 0);
-const AGENT_NAMES = { claude: 'Claude', codex: 'Codex' };
+const AGENT_NAMES = { claude: 'Claude', codex: 'Codex', zcode: 'ZCode' };
 
 let quran = null;
 let pos = { surah: 1, ayah: 1 };
