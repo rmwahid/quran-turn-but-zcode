@@ -6,6 +6,5 @@
   "homepage": "https://quran.allrize.tech",
   "repository": "https://github.com/rmwahid/quran-turn-but-zcode",
   "license": "MIT",
-  "keywords": ["quran", "reading", "hooks", "offline"],
-  "hooks": "hooks"
+  "keywords": ["quran", "reading", "hooks", "offline"]
 }
