@@ -6,6 +6,7 @@
 // Usage: node tools-zcode/verify-zcode.mjs [--root <plugin dir>] [--port <n>] [--keep]
 // Default root: the newest version in ~/.zcode/cli/plugins/cache/quran-turn/quran-turn.
 import { existsSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { spawn, spawnSync } from 'node:child_process';
 import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -60,6 +61,17 @@ check('ZCode manifest present', (() => {
     return false;
   }
 })());
+// ZCode builds its plugin catalog from the root marketplace.json, Claude Code from
+// the .claude-plugin one. They must not drift apart.
+check('root marketplace.json matches the Claude one', (() => {
+  try {
+    const rootManifest = readFileSync(join(root, 'marketplace.json'), 'utf8');
+    const claudeManifest = readFileSync(join(root, '.claude-plugin', 'marketplace.json'), 'utf8');
+    return JSON.stringify(JSON.parse(rootManifest)) === JSON.stringify(JSON.parse(claudeManifest));
+  } catch {
+    return false;
+  }
+})());
 
 // ZCode's own runtime can validate the manifest and every component path it
 // references. Best effort: skipped when the runtime is not where we expect it.
@@ -72,11 +84,46 @@ const runtime = [
 if (runtime) {
   const r = spawnSync(process.execPath, [runtime, 'plugins', 'validate', root], { encoding: 'utf8' });
   check('ZCode runtime validates the plugin', r.status === 0, `${r.stdout ?? ''}${r.stderr ?? ''}`.trim());
+
+  // The installed copy must load without diagnostics. ZCode reports things like a
+  // manifest component field pointing at a missing file here, which is easy to
+  // ship by accident because the plugin still appears to work otherwise.
+  const list = spawnSync(process.execPath, [runtime, 'plugins', 'list', '--json'], { encoding: 'utf8' });
+  let installed = null;
+  try {
+    const parsed = JSON.parse(list.stdout ?? '');
+    const entries = Array.isArray(parsed) ? parsed : parsed.installed ?? [];
+    installed = entries.find((p) => p.id === 'quran-turn@quran-turn') ?? null;
+  } catch {}
+  if (installed) {
+    const diagnostics = installed.diagnostics ?? [];
+    check('ZCode loads the plugin without diagnostics', diagnostics.length === 0, JSON.stringify(diagnostics));
+  } else {
+    console.log('skip  quran-turn is not installed in ZCode, diagnostics check not run');
+  }
 } else {
   console.log('skip  ZCode runtime not found, manifest validation not run');
 }
 check('hook exit settles first (Windows)', fileHas('bin/quran-turn', 'aborts with a libuv assertion'));
 check('static guard uses relative()', fileHas('src/server.mjs', 'const inside = relative(base, file);'));
+
+// The reader refuses to render anything unless the text matches its pinned SHA-256,
+// so a Windows checkout with CRLF endings silently breaks the whole UI. Guard the
+// bytes themselves and the git rule that keeps them intact on a fresh clone.
+check('Quran text matches the pinned checksum', (() => {
+  try {
+    const pinned = (readFileSync(join(root, 'app', 'config.js'), 'utf8').match(/QURAN_SHA256 = '([a-f0-9]{64})'/) ?? [])[1];
+    const actual = createHash('sha256').update(readFileSync(join(root, 'data', 'quran-uthmani.txt'))).digest('hex');
+    return Boolean(pinned) && pinned === actual;
+  } catch {
+    return false;
+  }
+})());
+check('.gitattributes keeps the data files LF-only', (() => {
+  const rules = readFileSync(join(root, '.gitattributes'), 'utf8');
+  return ['data/quran-uthmani.txt', 'data/quran-data.js'].every((file) =>
+    new RegExp(`^${file.replace(/[.]/g, '\\.')}\\s+text\\s+eol=lf$`, 'm').test(rules));
+})());
 
 // 2. reader server
 const server = spawn(process.execPath, [bin, 'serve'], { env, stdio: 'ignore' });

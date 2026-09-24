@@ -1,109 +1,90 @@
 #!/usr/bin/env node
-// Registers this fork as a ZCode marketplace and installs the plugin from it.
+// Installs quran-turn into ZCode through ZCode's own CLI.
 //
-// ZCode keeps plugin state under ~/.zcode/cli:
-//   plugins/known_marketplaces.json        registered marketplaces
-//   plugins/marketplaces/<id>/             the marketplace clone
-//   plugins/cache/<id>/<plugin>/<ver>/     the copy ZCode actually loads
-//   config.json -> plugins.enabledPlugins  enable state
+// ZCode keeps an install registry that only its own CLI fills. Writing
+// ~/.zcode/cli/plugins by hand is not enough: the plugin then shows as enabled in
+// config.json and its files sit in cache/, but ZCode never loads it, so no hook
+// ever runs. This wrapper locates the ZCode runtime and drives the CLI instead.
 //
-// ZCode reads marketplaces at startup, so restart the app afterwards.
-import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
-import { execFileSync, spawnSync } from 'node:child_process';
-import { homedir } from 'node:os';
+// Usage:
+//   node tools-zcode/install-zcode.mjs [--source <github-repo|url|path>] [--verify]
+// Default source: this checkout, so a clone installs itself without network.
+// Use --source rmwahid/quran-turn-but-zcode to follow the fork on GitHub.
+import { existsSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+const args = process.argv.slice(2);
+const flag = (name) => {
+  const i = args.indexOf(`--${name}`);
+  return i >= 0 ? args[i + 1] : undefined;
+};
+
 const MARKETPLACE = 'quran-turn';
 const PLUGIN = 'quran-turn';
-const REPO = 'rmwahid/quran-turn-but-zcode';
-const CLONE_URL = `https://github.com/${REPO}.git`;
+const pluginRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 
-const here = dirname(fileURLToPath(import.meta.url));
-const pluginRoot = dirname(here); // the repo root is the plugin root
-const CLI = join(homedir(), '.zcode', 'cli');
-const PLUGINS = join(CLI, 'plugins');
-const MKT_DIR = join(PLUGINS, 'marketplaces', MARKETPLACE);
-const KNOWN = join(PLUGINS, 'known_marketplaces.json');
-const CONFIG = join(CLI, 'config.json');
-
-const readJson = (p) => JSON.parse(readFileSync(p, 'utf8'));
-const writeJson = (p, v) => writeFileSync(p, JSON.stringify(v, null, 2) + '\n');
-const git = (...args) => execFileSync('git', args, { cwd: MKT_DIR, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
-
-if (!existsSync(CLI)) {
-  console.error(`ZCode config not found at ${CLI}. Install and run ZCode once first.`);
+const runtime = [
+  process.env.ZCODE_RUNTIME,
+  process.platform === 'win32' && join(process.env.ProgramFiles ?? 'C:\\Program Files', 'ZCode', 'resources', 'glm', 'zcode.cjs'),
+  process.platform === 'darwin' && '/Applications/ZCode.app/Contents/Resources/glm/zcode.cjs',
+  process.platform === 'linux' && '/opt/ZCode/resources/glm/zcode.cjs',
+].filter(Boolean).find((p) => existsSync(p));
+if (!runtime) {
+  console.error('ZCode runtime not found. Set ZCODE_RUNTIME to the app\'s resources/glm/zcode.cjs.');
   process.exit(1);
 }
 
-// 1. the marketplace clone ZCode reads the plugin from
-if (existsSync(MKT_DIR)) {
-  const origin = git('remote', 'get-url', 'origin');
-  if (!origin.includes(REPO)) {
-    console.log(`marketplace clone points at ${origin}, replacing it with ${REPO}`);
-    rmSync(MKT_DIR, { recursive: true, force: true });
-  }
+const zcode = (cliArgs) => {
+  const r = spawnSync(process.execPath, [runtime, ...cliArgs], { encoding: 'utf8', timeout: 300000 });
+  return { code: r.status ?? 1, out: `${r.stdout ?? ''}${r.stderr ?? ''}`.trim() };
+};
+const first = (text) => (text ? text.split('\n')[0] : '');
+
+const source = flag('source') ?? pluginRoot;
+console.log(`runtime:  ${runtime}`);
+console.log(`source:   ${source}`);
+
+// A marketplace is added once and refreshed afterwards; add also fails when the
+// same source is already registered, so fall back to update either way.
+const add = zcode(['plugins', 'marketplace', 'add', source]);
+if (add.code === 0 && !/already|exists/i.test(add.out)) {
+  console.log(`add:      ${first(add.out)}`);
+} else {
+  const update = zcode(['plugins', 'marketplace', 'update', MARKETPLACE]);
+  console.log(`update:   ${first(update.out) || `exit ${update.code}`}`);
 }
-if (!existsSync(MKT_DIR)) {
-  mkdirSync(join(PLUGINS, 'marketplaces'), { recursive: true });
-  execFileSync('git', ['clone', CLONE_URL, MKT_DIR], { stdio: 'inherit' });
+
+const install = zcode(['plugins', 'install', `${PLUGIN}@${MARKETPLACE}`]);
+console.log(`install:  ${first(install.out) || `exit ${install.code}`}`);
+
+const list = zcode(['plugins', 'list', '--json']);
+let entry = null;
+try {
+  const parsed = JSON.parse(list.out);
+  const installed = Array.isArray(parsed) ? parsed : parsed.installed ?? [];
+  entry = installed.find((p) => p.id === `${PLUGIN}@${MARKETPLACE}`) ?? null;
+} catch {}
+
+if (!entry) {
+  console.error('\nquran-turn is not in ZCode\'s installed list after install. Run the CLI by hand to see the error:');
+  console.error(`  node "${runtime}" plugins install ${PLUGIN}@${MARKETPLACE}`);
+  process.exit(1);
 }
-git('fetch', '--tags', '--prune', 'origin');
-const branch = git('rev-parse', '--abbrev-ref', 'HEAD') || 'main';
-if (branch !== 'HEAD') {
-  git('checkout', '--force', branch);
-  git('reset', '--hard', `origin/${branch}`);
-}
-git('clean', '-fd');
-console.log(`marketplace: ${REPO} @ ${git('rev-parse', '--short', 'HEAD')} (${branch})`);
 
-// 2. sync the plugin cache ZCode loads
-const manifest = existsSync(join(pluginRoot, '.zcode-plugin', 'plugin.json'))
-  ? join(pluginRoot, '.zcode-plugin', 'plugin.json')
-  : join(pluginRoot, '.claude-plugin', 'plugin.json');
-const version = readJson(manifest).version;
-const cache = join(PLUGINS, 'cache', MARKETPLACE, PLUGIN, version);
-rmSync(cache, { recursive: true, force: true });
-cpSync(pluginRoot, cache, { recursive: true, filter: (src) => !/[\\/]\.git([\\/]|$)/.test(src) });
-mkdirSync(join(PLUGINS, 'data', `${PLUGIN}@${MARKETPLACE}`), { recursive: true });
-console.log(`cache: ${cache}`);
+const hooks = (entry.hookDetails ?? []).length;
+console.log(`\n${entry.id} [${entry.enabled ? 'enabled' : 'disabled'}] version ${entry.version}`);
+console.log(`hooks: ${hooks}${hooks ? '' : '  <-- expected 5; ZCode will not run anything without them'}`);
+if (entry.diagnostics?.length) console.log(`diagnostics: ${JSON.stringify(entry.diagnostics)}`);
 
-// 3. register the marketplace
-const known = readJson(KNOWN);
-const previous = (known.marketplaces ?? []).find((m) => m.id === MARKETPLACE);
-const now = new Date().toISOString();
-known.marketplaces = [
-  ...(known.marketplaces ?? []).filter((m) => m.id !== MARKETPLACE),
-  {
-    id: MARKETPLACE,
-    source: { source: 'github', repo: REPO },
-    name: MARKETPLACE,
-    description: 'Quran Turn, with ZCode support and Windows fixes.',
-    addedAt: previous?.addedAt ?? now,
-    pluginCount: 1,
-    lastUpdated: now,
-  },
-];
-writeJson(KNOWN, known);
-console.log(`marketplace registered: ${MARKETPLACE}`);
+console.log('\nRestart ZCode: plugins and hooks are read at startup.');
 
-// 4. enable the plugin
-const config = readJson(CONFIG);
-config.plugins ??= {};
-config.plugins.enabledPlugins ??= {};
-config.plugins.enabledPlugins[`${PLUGIN}@${MARKETPLACE}`] = true;
-writeJson(CONFIG, config);
-console.log(`enabled: ${PLUGIN}@${MARKETPLACE}`);
-
-// 5. report
-const cacheRoot = join(PLUGINS, 'cache', MARKETPLACE, PLUGIN);
-const versions = readdirSync(cacheRoot).filter((v) => existsSync(join(cacheRoot, v, 'package.json')));
-console.log(`cached versions: ${versions.join(', ')}`);
-console.log('\nRestart ZCode to pick up the marketplace and plugin.');
-console.log('If ZCode keeps the plugin disabled, run this script again or enable it in Settings > Plugin Management.');
-
-if (process.argv.includes('--verify')) {
-  console.log('\nRunning verification...');
-  const result = spawnSync(process.execPath, [join(here, 'verify-zcode.mjs'), '--root', cache], { stdio: 'inherit' });
+if (args.includes('--verify')) {
+  console.log('\nRunning verification against the installed copy...');
+  const result = spawnSync(process.execPath, [join(pluginRoot, 'tools-zcode', 'verify-zcode.mjs')], {
+    stdio: 'inherit',
+    env: { ...process.env, QURAN_TURN_NO_WINDOW: '1' },
+  });
   process.exit(result.status ?? 1);
 }
