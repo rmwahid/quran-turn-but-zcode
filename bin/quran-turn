@@ -154,7 +154,12 @@ try {
   switch (cmd) {
     case 'hook':
       await hook(rest[0]);
-      process.exit(0); // don't linger on keep-alive sockets or stdin
+      // On Windows, exiting straight after a fetch aborts with a libuv assertion
+      // (!(handle->flags & UV_HANDLE_CLOSING) in src/win/async.c) and the process
+      // dies with a non-zero code plus stderr output. Give pending handles a
+      // moment to close first; the hook still returns in well under its timeout.
+      await new Promise((r) => setTimeout(r, 50));
+      process.exit(0);
       break;
     case 'serve': {
       const { url } = await startServer({ port });
