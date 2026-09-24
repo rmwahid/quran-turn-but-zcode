@@ -1,0 +1,9 @@
+# data/quran-uthmani.txt has to keep its exact bytes: the reader refuses to render
+# unless its SHA-256 matches the pin in app/config.js, and scripts/verify-quran.mjs
+# parses it line by line. data/quran-data.js is checksummed by data/SHA256SUMS, and
+# that file is parsed line by line too. Without these rules a fresh clone on Windows
+# checks them out with CRLF endings, so the reader shows nothing at all and
+# npm run verify fails with "Malformed line".
+data/quran-uthmani.txt text eol=lf
+data/quran-data.js text eol=lf
+data/SHA256SUMS text eol=lf

@@ -6,6 +6,9 @@ export const SURAH_COUNT = 114;
 export const AYAH_COUNT = 6236;
 
 // Parse Tanzil "txt-2" format: `sura|aya|text` per line, `#` comment block at the end.
+// Lines are split on a bare "\n", so the data files have to reach disk with LF
+// endings (.gitattributes pins that). With CRLF every line keeps a trailing "\r"
+// and this throws "Malformed line" before the first ayah is read.
 export function parseTanzil(raw) {
   const verses = new Map();
   const bySurah = [[]];

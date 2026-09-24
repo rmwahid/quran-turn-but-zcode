@@ -2,6 +2,9 @@
 
 // SHA-256 of data/quran-uthmani.txt. The reader refuses to render if the
 // file it loads does not match. `npm run verify` checks this matches.
+// The file has to keep its exact LF bytes: a Windows checkout with CRLF endings
+// changes this hash and the reader shows nothing at all, which is why
+// .gitattributes pins `text eol=lf` on it and on the other checksummed data files.
 export const QURAN_SHA256 = '6933e133dd56db778c801bf738848454e43648105a151e8d84d86a7cae39ec5f';
 
 // Opened only when the user clicks "Support": the site's "Support" modal, which
