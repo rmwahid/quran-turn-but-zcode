@@ -30,7 +30,7 @@ export function snapshot() {
     position: readJson('state.json'),
     agent,
     config: readJson('config.json'),
-    // Whether the reader can offer "Back to Claude/Codex" (macOS + a known host app).
+    // Whether the reader can offer "Back to the agent" (macOS + a known host app).
     canSwitch: desktop.canSwitch() && desktop.validBundleId(agent.host),
     // The reader reloads itself when this differs from its own version (after an update).
     version: VERSION,

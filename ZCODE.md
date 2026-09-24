@@ -36,6 +36,7 @@ ZCode is compatible with Claude Code plugins, which covers everything the plugin
 | `feat: resume the reader after a failed tool call` | ZCode emits `PostToolUseFailure`, an event other agents do not have, mapped to the same `resume` command |
 | `fix: let pending handles settle before the hook process exits` | Windows fix, see below |
 | `fix: compare static file paths with platform-native separators` | Windows fix, see below |
+| `docs: document ZCode support in the README and add a ZCode manifest` | A ZCode-native `.zcode-plugin/plugin.json` (ZCode reads it before the Claude manifest, mirroring how upstream ships one manifest per agent), a fork note and ZCode install steps in the README, agent-neutral wording where comments named Claude or Codex only, and verification now also runs ZCode's own `plugins validate` |
 
 ### Windows fix 1: hook exit code
 
@@ -80,11 +81,12 @@ behaviour described above, then rerun the verification before pushing.
 node tools-zcode/verify-zcode.mjs [--root <plugin dir>] [--port <n>] [--keep]
 ```
 
-24 assertions: the fork's five code markers, the reader server, every asset the UI needs
-(including a traversal attempt that must stay blocked), the ZCode label served to the browser,
-and the four hook events driven through a shell exactly like `hooks/hooks.json` does, each
-expecting exit 0, no stdout, no stderr and the right state transition. It uses a temporary
-`QURAN_TURN_HOME` and port, so your real reading state is never touched.
+Up to 26 assertions: the fork's six code and manifest markers, a run of ZCode's own
+`plugins validate` against the checkout when the runtime is installed, the reader server, every
+asset the UI needs (including a traversal attempt that must stay blocked), the ZCode label served
+to the browser, and the four hook events driven through a shell exactly like `hooks/hooks.json`
+does, each expecting exit 0, no stdout, no stderr and the right state transition. It uses a
+temporary `QURAN_TURN_HOME` and port, so your real reading state is never touched.
 
 ## Runtime notes
 

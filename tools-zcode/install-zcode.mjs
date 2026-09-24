@@ -58,7 +58,10 @@ git('clean', '-fd');
 console.log(`marketplace: ${REPO} @ ${git('rev-parse', '--short', 'HEAD')} (${branch})`);
 
 // 2. sync the plugin cache ZCode loads
-const version = readJson(join(pluginRoot, '.claude-plugin', 'plugin.json')).version;
+const manifest = existsSync(join(pluginRoot, '.zcode-plugin', 'plugin.json'))
+  ? join(pluginRoot, '.zcode-plugin', 'plugin.json')
+  : join(pluginRoot, '.claude-plugin', 'plugin.json');
+const version = readJson(manifest).version;
 const cache = join(PLUGINS, 'cache', MARKETPLACE, PLUGIN, version);
 rmSync(cache, { recursive: true, force: true });
 cpSync(pluginRoot, cache, { recursive: true, filter: (src) => !/[\\/]\.git([\\/]|$)/.test(src) });

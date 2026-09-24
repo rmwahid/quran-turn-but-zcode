@@ -1,0 +1,11 @@
+{
+  "name": "quran-turn",
+  "version": "0.6.0",
+  "description": "Read the Qur'an while ZCode takes its turn. Offline, no account, no tracking.",
+  "author": { "name": "Rizaldy", "url": "https://github.com/rzrizaldy" },
+  "homepage": "https://quran.allrize.tech",
+  "repository": "https://github.com/rmwahid/quran-turn-but-zcode",
+  "license": "MIT",
+  "keywords": ["quran", "reading", "hooks", "offline"],
+  "hooks": "hooks"
+}

@@ -4,6 +4,8 @@
 
 Quran Turn is a plugin for **Claude Code** and **Codex**. When you send your agent a prompt, a quiet reader window opens at the exact ayah you left off. Press **Float** and the reader becomes a small ayah card that stays on top of every window, right beside your agent. When the agent needs you, a strip slides into the card and you go back with one press of Space. When the turn ends, your place is saved automatically.
 
+> **This is a fork.** [rmwahid/quran-turn-but-zcode](https://github.com/rmwahid/quran-turn-but-zcode) adds **ZCode** support and fixes two Windows bugs (the reader window served 404 for its own files, and every hook exited 127). For ZCode see [Install](#zcode) below and [ZCODE.md](ZCODE.md); everything else here is upstream's documentation and still applies to Claude Code and Codex untouched.
+
 <p align="center">
   <img src="docs/reader-working.png" width="260" alt="Reader while Claude is working, showing Al-Baqara 2:155">
   <img src="docs/reader-needs-you.png" width="260" alt="Claude needs you: a Back to Claude button, or press Space">
@@ -32,6 +34,16 @@ Paste this into **Codex** (CLI or the Codex app):
 ```text
 Install Quran Turn for Codex. Run `codex plugin marketplace add rzrizaldy/quran-turn`, then `codex plugin add quran-turn@quran-turn`, and confirm it is enabled with `codex plugin list`. Tell me to open interactive `codex`, run `/hooks`, and individually review and trust Quran Turn's UserPromptSubmit, PermissionRequest, PostToolUse, and Stop hooks. Do not trust unrelated hooks or bypass hook trust. Then start a new Codex turn; restart the Codex app first if I use it.
 ```
+
+### ZCode
+
+ZCode is Claude-plugin compatible, so it installs from this fork unchanged. From a clone of this repository:
+
+```bash
+node tools-zcode/install-zcode.mjs --verify
+```
+
+Restart ZCode afterwards. The reader says **"ZCode is working"**, pauses when ZCode asks for permission, and saves your place when the turn ends. [ZCODE.md](ZCODE.md) explains what this fork changes and how to pull updates from upstream.
 
 ### Or run the commands yourself
 

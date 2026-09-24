@@ -97,7 +97,7 @@ function readStdin(ms = 300) {
   });
 }
 
-// Hooks must be invisible: no stdout (Claude/Codex would read it as context),
+// Hooks must be invisible: no stdout (agent runtimes read it as context),
 // always exit 0, and fall back to writing files if the server is unreachable.
 async function hook(event) {
   const EVENTS = { start: 'start', 'needs-you': 'needs-you', resume: 'resume', stop: 'stop' };

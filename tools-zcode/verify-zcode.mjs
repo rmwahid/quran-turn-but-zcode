@@ -53,6 +53,28 @@ const fileHas = (rel, needle) => {
 check('hooks pass --agent zcode', fileHas('hooks/hooks.json', '--agent zcode'));
 check('hooks handle PostToolUseFailure', fileHas('hooks/hooks.json', 'PostToolUseFailure'));
 check('reader labels ZCode', fileHas('app/reader.js', "zcode: 'ZCode'"));
+check('ZCode manifest present', (() => {
+  try {
+    return JSON.parse(readFileSync(join(root, '.zcode-plugin', 'plugin.json'), 'utf8')).name === 'quran-turn';
+  } catch {
+    return false;
+  }
+})());
+
+// ZCode's own runtime can validate the manifest and every component path it
+// references. Best effort: skipped when the runtime is not where we expect it.
+const runtime = [
+  process.env.ZCODE_RUNTIME,
+  process.platform === 'win32' && join(process.env.ProgramFiles ?? 'C:\\Program Files', 'ZCode', 'resources', 'glm', 'zcode.cjs'),
+  process.platform === 'darwin' && '/Applications/ZCode.app/Contents/Resources/glm/zcode.cjs',
+  process.platform === 'linux' && '/opt/ZCode/resources/glm/zcode.cjs',
+].filter(Boolean).find((p) => existsSync(p));
+if (runtime) {
+  const r = spawnSync(process.execPath, [runtime, 'plugins', 'validate', root], { encoding: 'utf8' });
+  check('ZCode runtime validates the plugin', r.status === 0, `${r.stdout ?? ''}${r.stderr ?? ''}`.trim());
+} else {
+  console.log('skip  ZCode runtime not found, manifest validation not run');
+}
 check('hook exit settles first (Windows)', fileHas('bin/quran-turn', 'aborts with a libuv assertion'));
 check('static guard uses relative()', fileHas('src/server.mjs', 'const inside = relative(base, file);'));
 
