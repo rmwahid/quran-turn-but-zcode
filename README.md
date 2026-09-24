@@ -4,7 +4,7 @@
 
 Quran Turn is a plugin for **Claude Code** and **Codex**. When you send your agent a prompt, a quiet reader window opens at the exact ayah you left off. Press **Float** and the reader becomes a small ayah card that stays on top of every window, right beside your agent. When the agent needs you, a strip slides into the card and you go back with one press of Space. When the turn ends, your place is saved automatically.
 
-> **This is a fork.** [rmwahid/quran-turn-but-zcode](https://github.com/rmwahid/quran-turn-but-zcode) adds **ZCode** support and fixes two Windows bugs (the reader window served 404 for its own files, and every hook exited 127). For ZCode see [Install](#zcode) below and [ZCODE.md](ZCODE.md); everything else here is upstream's documentation and still applies to Claude Code and Codex untouched.
+> **This is a fork.** [rmwahid/quran-turn-but-zcode](https://github.com/rmwahid/quran-turn-but-zcode) adds **ZCode** support, including the packaging ZCode needs, and fixes three Windows bugs: the reader window served 404 for every one of its own files, every hook exited 127, and a fresh clone could not render the Qur'an at all because git checked the data files out with CRLF endings and the reader refuses to render anything that fails its pinned SHA-256. All three affect any agent on Windows, so Claude Code and Codex on Windows benefit too; point your agent at this fork instead of the upstream repository to get them. For ZCode see [Install](#zcode) below and [ZCODE.md](ZCODE.md); everything else here is upstream's documentation.
 
 <p align="center">
   <img src="docs/reader-working.png" width="260" alt="Reader while Claude is working, showing Al-Baqara 2:155">
@@ -37,13 +37,14 @@ Install Quran Turn for Codex. Run `codex plugin marketplace add rzrizaldy/quran-
 
 ### ZCode
 
-ZCode is Claude-plugin compatible, so it installs from this fork unchanged. From a clone of this repository:
+ZCode is compatible with Claude plugins, but it builds its plugin catalog from a root `marketplace.json` that upstream does not ship, so this fork adds that file along with a small installer. From a clone of this repository:
 
 ```bash
 node tools-zcode/install-zcode.mjs --verify
+node tools-zcode/install-zcode.mjs --source rmwahid/quran-turn-but-zcode --verify   # follow the GitHub fork instead
 ```
 
-Restart ZCode afterwards. The reader says **"ZCode is working"**, pauses when ZCode asks for permission, and saves your place when the turn ends. [ZCODE.md](ZCODE.md) explains what this fork changes and how to pull updates from upstream.
+The installer drives ZCode's own CLI, because ZCode keeps an install registry that only its CLI fills; writing the plugin cache by hand leaves the plugin enabled but never loaded. Restart ZCode afterwards. The reader says **"ZCode is working"**, pauses when ZCode asks for permission, and saves your place when the turn ends. [ZCODE.md](ZCODE.md) covers what the fork changes, the packaging ZCode needs, and how to pull updates from upstream.
 
 ### Or run the commands yourself
 
