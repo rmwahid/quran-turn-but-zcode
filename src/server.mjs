@@ -2,7 +2,7 @@
 // state while it runs: hooks POST their events here instead of touching files.
 import { readFile } from 'node:fs/promises';
 import http from 'node:http';
-import { extname, join, normalize } from 'node:path';
+import { extname, isAbsolute, join, normalize, relative } from 'node:path';
 import { ROOT, VERSION, loadMeta } from './quran.mjs';
 import { applyHook, logError, readJson, setPosition, validPosition } from './state.mjs';
 import * as desktop from './window.mjs';
@@ -210,7 +210,10 @@ export function startServer({ port = DEFAULT_PORT, win = desktop, idleExit = tru
       const base = STATIC[prefix];
       const rel = pathname === '/' ? 'index.html' : decodeURIComponent(pathname.slice(prefix.length));
       const file = normalize(join(base, rel));
-      if (!file.startsWith(base + '/') || !MIME[extname(file)]) return json(res, 404, { error: 'not found' });
+      // join() uses the host separator, so a "/" prefix never matches on Windows
+      // and every asset would 404. relative() compares the same way on all platforms.
+      const inside = relative(base, file);
+      if (inside.startsWith('..') || isAbsolute(inside) || !MIME[extname(file)]) return json(res, 404, { error: 'not found' });
       const bytes = await readFile(file);
       res.writeHead(200, { 'content-type': MIME[extname(file)], 'cache-control': 'no-cache' });
       res.end(bytes);
